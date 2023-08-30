@@ -56,8 +56,7 @@ func TryToDecodeBase64Gzip(data []byte) (string, error) {
 	return string(plainText), nil
 }
 
-// EncodeGzipBase64 compresses the input string using gzip and then encodes it
-// using base64.
+// EncodeGzipBase64 gzips and then base64-encodes the string.
 func EncodeGzipBase64(s string) (string, error) {
 	var zbuf bytes.Buffer
 	zw := gzip.NewWriter(&zbuf)
