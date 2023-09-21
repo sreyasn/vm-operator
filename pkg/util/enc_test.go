@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2023 VMware, Inc. All Rights Reserved.
+// Copyright (c) 2022 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package util_test
@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -152,6 +153,7 @@ var _ = Describe("TryToDecodeBase64Gzip", func() {
 			})
 		})
 	})
+
 	Context("EncodeGzipBase64", func() {
 		It("Encodes a string correctly", func() {
 			input := "HelloWorld"

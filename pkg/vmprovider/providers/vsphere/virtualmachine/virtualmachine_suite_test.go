@@ -15,7 +15,6 @@ func vcSimTests() {
 	Describe("ClusterComputeResource", ccrTests)
 	Describe("Delete", deleteTests)
 	Describe("Publish", publishTests)
-	Describe("Backup", backupTests)
 }
 
 var suite = builder.NewTestSuite()

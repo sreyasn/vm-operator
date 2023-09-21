@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	trueString                    = "true"
 	TrueString                    = "true"
 	VmopNamespaceEnv              = "POD_NAMESPACE"
 	WcpFaultDomainsFSS            = "FSS_WCP_FAULTDOMAINS"
@@ -92,43 +93,43 @@ func GetNetworkProviderType() string {
 }
 
 var IsWcpFaultDomainsFSSEnabled = func() bool {
-	return os.Getenv(WcpFaultDomainsFSS) == TrueString
+	return os.Getenv(WcpFaultDomainsFSS) == trueString
 }
 
 func IsVMServiceV1Alpha2FSSEnabled() bool {
-	return os.Getenv(VMServiceV1Alpha2FSS) == TrueString
+	return os.Getenv(VMServiceV1Alpha2FSS) == trueString
 }
 
 var IsInstanceStorageFSSEnabled = func() bool {
-	return os.Getenv(InstanceStorageFSS) == TrueString
+	return os.Getenv(InstanceStorageFSS) == trueString
 }
 
 var IsUnifiedTKGFSSEnabled = func() bool {
-	return os.Getenv(UnifiedTKGFSS) == TrueString
+	return os.Getenv(UnifiedTKGFSS) == trueString
 }
 
 var IsVMClassAsConfigFSSEnabled = func() bool {
-	return os.Getenv(VMClassAsConfigFSS) == TrueString
+	return os.Getenv(VMClassAsConfigFSS) == trueString
 }
 
 var IsVMClassAsConfigFSSDaynDateEnabled = func() bool {
-	return os.Getenv(VMClassAsConfigDaynDateFSS) == TrueString
+	return os.Getenv(VMClassAsConfigDaynDateFSS) == trueString
 }
 
 var IsWCPVMImageRegistryEnabled = func() bool {
-	return os.Getenv(VMImageRegistryFSS) == TrueString
+	return os.Getenv(VMImageRegistryFSS) == trueString
 }
 
 var IsNamespacedVMClassFSSEnabled = func() bool {
-	return os.Getenv(NamespacedVMClassFSS) == TrueString
+	return os.Getenv(NamespacedVMClassFSS) == trueString
 }
 
 var IsWindowsSysprepFSSEnabled = func() bool {
-	return os.Getenv(WindowsSysprepFSS) == TrueString
+	return os.Getenv(WindowsSysprepFSS) == trueString
 }
 
 var IsVMServiceBackupRestoreFSSEnabled = func() bool {
-	return os.Getenv(VMServiceBackupRestoreFSS) == TrueString
+	return os.Getenv(VMServiceBackupRestoreFSS) == trueString
 }
 
 // MaxConcurrentCreateVMsOnProvider returns the percentage of reconciler
