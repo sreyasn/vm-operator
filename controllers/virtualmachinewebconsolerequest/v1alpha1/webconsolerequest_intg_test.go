@@ -29,12 +29,10 @@ func intgTests() {
 
 func webConsoleRequestReconcile() {
 	var (
-		ctx                *builder.IntegrationTestContext
-		wcr                *vmopv1.WebConsoleRequest
-		vm                 *vmopv1.VirtualMachine
-		proxySvc           *corev1.Service
-		v1a1ProviderCalled bool
-		v1a2ProviderCalled bool
+		ctx      *builder.IntegrationTestContext
+		wcr      *vmopv1.WebConsoleRequest
+		vm       *vmopv1.VirtualMachine
+		proxySvc *corev1.Service
 	)
 
 	getWebConsoleRequest := func(ctx *builder.IntegrationTestContext, objKey types.NamespacedName) *vmopv1.WebConsoleRequest {
@@ -86,34 +84,37 @@ func webConsoleRequestReconcile() {
 				},
 			},
 		}
-
-		fakeVMProvider.Lock()
-		defer fakeVMProvider.Unlock()
-
-		fakeVMProvider.GetVirtualMachineWebMKSTicketFn = func(ctx context.Context, vm *vmopv1.VirtualMachine, pubKey string) (string, error) {
-			v1a1ProviderCalled = true
-			return "some-fake-webmksticket", nil
-		}
-
-		fakeVMProviderA2.Lock()
-		defer fakeVMProviderA2.Unlock()
-
-		fakeVMProviderA2.GetVirtualMachineWebMKSTicketFn = func(ctx context.Context, vm *vmopv1alpha2.VirtualMachine, pubKey string) (string, error) {
-			v1a2ProviderCalled = true
-			return "some-fake-webmksticket-1", nil
-		}
 	})
 
 	AfterEach(func() {
 		ctx.AfterEach()
 		ctx = nil
-		fakeVMProvider.Reset()
-		fakeVMProviderA2.Reset()
-		v1a1ProviderCalled = false
-		v1a2ProviderCalled = false
 	})
 
 	Context("Reconcile", func() {
+		var (
+			v1a1ProviderCalled bool
+			v1a2ProviderCalled bool
+		)
+
+		BeforeEach(func() {
+			fakeVMProvider.Lock()
+			defer fakeVMProvider.Unlock()
+
+			fakeVMProvider.GetVirtualMachineWebMKSTicketFn = func(ctx context.Context, vm *vmopv1.VirtualMachine, pubKey string) (string, error) {
+				v1a1ProviderCalled = true
+				return "some-fake-webmksticket", nil
+			}
+
+			fakeVMProviderA2.Lock()
+			defer fakeVMProviderA2.Unlock()
+
+			fakeVMProviderA2.GetVirtualMachineWebMKSTicketFn = func(ctx context.Context, vm *vmopv1alpha2.VirtualMachine, pubKey string) (string, error) {
+				v1a2ProviderCalled = true
+				return "some-fake-webmksticket-1", nil
+			}
+		})
+
 		JustBeforeEach(func() {
 			Expect(ctx.Client.Create(ctx, proxySvc)).To(Succeed())
 			proxySvc.Status = corev1.ServiceStatus{
@@ -137,6 +138,13 @@ func webConsoleRequestReconcile() {
 			Expect(err == nil || k8serrors.IsNotFound(err)).To(BeTrue())
 			err = ctx.Client.Delete(ctx, proxySvc)
 			Expect(err == nil || k8serrors.IsNotFound(err)).To(BeTrue())
+		})
+
+		AfterEach(func() {
+			fakeVMProvider.Reset()
+			fakeVMProviderA2.Reset()
+			v1a1ProviderCalled = false
+			v1a2ProviderCalled = false
 		})
 
 		When("v1a1 provider", func() {
