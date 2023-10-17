@@ -7,6 +7,7 @@ package network
 import (
 	goctx "context"
 	"fmt"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"net"
 	"strings"
 	"time"
@@ -259,30 +260,42 @@ func createNetOPNetworkInterface(
 		return nil, fmt.Errorf("network kind %q is not supported for VDS", kind)
 	}
 
+	var err error
 	// If empty, NetOP will try to select a namespace default.
 	networkName := interfaceSpec.Network.Name
-
-	netIf := &netopv1alpha1.NetworkInterface{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      NetOPCRName(vmCtx.VM.Name, networkName, interfaceSpec.Name, false),
-			Namespace: vmCtx.VM.Namespace,
-		},
+	netIf := &netopv1alpha1.NetworkInterface{}
+	netIfKey := types.NamespacedName{
+		Namespace: vmCtx.VM.Namespace,
+		Name:      NetOPCRName(vmCtx.VM.Name, networkName, interfaceSpec.Name, true),
 	}
 
-	_, err := controllerutil.CreateOrUpdate(vmCtx, client, netIf, func() error {
-		if err := controllerutil.SetOwnerReference(vmCtx.VM, netIf, client.Scheme()); err != nil {
-			// If this fails we likely have an object name collision, and we're in a tough spot.
-			return err
+	// check if a networkIf object exists with the older (v1a1) naming convention
+	if err = client.Get(vmCtx, netIfKey, netIf); ctrlruntime.IgnoreNotFound(err) != nil {
+		return nil, err
+	}
+
+	// If object with the older (v1a1) name is not found, use the new naming convention to create/update one.
+	if apierrors.IsNotFound(err) {
+		netIf.ObjectMeta = metav1.ObjectMeta{
+			Name:      NetOPCRName(vmCtx.VM.Name, networkName, interfaceSpec.Name, false),
+			Namespace: vmCtx.VM.Namespace,
 		}
 
-		netIf.Spec.NetworkName = networkName
-		// NetOP only defines a VMXNet3 type, but it doesn't really matter for our purposes.
-		netIf.Spec.Type = netopv1alpha1.NetworkInterfaceTypeVMXNet3
-		return nil
-	})
+		_, err := controllerutil.CreateOrUpdate(vmCtx, client, netIf, func() error {
+			if err := controllerutil.SetOwnerReference(vmCtx.VM, netIf, client.Scheme()); err != nil {
+				// If this fails we likely have an object name collision, and we're in a tough spot.
+				return err
+			}
 
-	if err != nil {
-		return nil, err
+			netIf.Spec.NetworkName = networkName
+			// NetOP only defines a VMXNet3 type, but it doesn't really matter for our purposes.
+			netIf.Spec.Type = netopv1alpha1.NetworkInterfaceTypeVMXNet3
+			return nil
+		})
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	netIf, err = waitForReadyNetworkInterface(vmCtx, client, netIf.Name)
@@ -402,27 +415,39 @@ func createNCPNetworkInterface(
 		return nil, fmt.Errorf("network kind %q is not supported for NCP", kind)
 	}
 
+	var err error
 	// If empty, NCP will use the namespace default.
 	networkName := interfaceSpec.Network.Name
-
-	vnetIf := &ncpv1alpha1.VirtualNetworkInterface{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      NCPCRName(vmCtx.VM.Name, networkName, interfaceSpec.Name, false),
-			Namespace: vmCtx.VM.Namespace,
-		},
+	vnetIf := &ncpv1alpha1.VirtualNetworkInterface{}
+	vnetIfKey := types.NamespacedName{
+		Namespace: vmCtx.VM.Namespace,
+		Name:      NCPCRName(vmCtx.VM.Name, networkName, interfaceSpec.Name, true),
 	}
 
-	_, err := controllerutil.CreateOrUpdate(vmCtx, client, vnetIf, func() error {
-		if err := controllerutil.SetOwnerReference(vmCtx.VM, vnetIf, client.Scheme()); err != nil {
-			return err
+	// check if a networkIf object exists with the older (v1a1) naming convention
+	if err = client.Get(vmCtx, vnetIfKey, vnetIf); ctrlruntime.IgnoreNotFound(err) != nil {
+		return nil, err
+	}
+
+	// If object with the older (v1a1) name is not found, use the new naming convention to create/update one.
+	if apierrors.IsNotFound(err) {
+		vnetIf.ObjectMeta = metav1.ObjectMeta{
+			Name:      NCPCRName(vmCtx.VM.Name, networkName, interfaceSpec.Name, false),
+			Namespace: vmCtx.VM.Namespace,
 		}
 
-		vnetIf.Spec.VirtualNetwork = networkName
-		return nil
-	})
+		_, err := controllerutil.CreateOrUpdate(vmCtx, client, vnetIf, func() error {
+			if err := controllerutil.SetOwnerReference(vmCtx.VM, vnetIf, client.Scheme()); err != nil {
+				return err
+			}
 
-	if err != nil {
-		return nil, err
+			vnetIf.Spec.VirtualNetwork = networkName
+			return nil
+		})
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	vnetIf, err = waitForReadyNCPNetworkInterface(vmCtx, client, vnetIf.Name)
