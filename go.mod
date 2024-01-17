@@ -39,8 +39,6 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require github.com/vmware-tanzu/image-registry-operator-api v0.0.0-20231123003309-4a80e6b7d784
-
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect

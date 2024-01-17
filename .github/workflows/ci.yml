@@ -10,6 +10,7 @@ on:
   push:
     branches:
     - main
+    - release/vc-8.0.2.00300
 
 jobs:
 
