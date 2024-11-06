@@ -1,7 +1,77 @@
-ARG BASE_IMAGE=gcr.io/distroless/base-debian12
+# Go version used to build the binaries.
+ARG GO_VERSION=1.23
+
+## Docker image used to build the binaries.
+FROM golang:${GO_VERSION} as builder
+
+
+## --------------------------------------
+## Multi-platform support
+## --------------------------------------
+
+ARG TARGETOS
+ARG TARGETARCH
+
+
+## --------------------------------------
+## Environment variables
+## --------------------------------------
+
+ENV GOOS=${TARGETOS}
+ENV GOARCH=${TARGETARCH}
+
+
+## --------------------------------------
+## Build information
+## --------------------------------------
+
+ARG BUILD_COMMIT
+ARG BUILD_NUMBER
+ARG BUILD_VERSION
+
+ENV BUILD_COMMIT=${BUILD_COMMIT}
+ENV BUILD_NUMBER=${BUILD_NUMBER}
+ENV BUILD_VERSION=${BUILD_VERSION}
+
+
+## --------------------------------------
+## Configure the working directory
+## --------------------------------------
+
+WORKDIR /workspace
+
+
+## --------------------------------------
+## Copy in local sources
+## --------------------------------------
+
+# Copy the sources
+COPY ./ ./
+
+
+## --------------------------------------
+## Build the binaries
+## --------------------------------------
+
+# Build
+RUN make manager-only
+RUN make web-console-validator-only
+
+
+## --------------------------------------
+## Create the manager image
+## --------------------------------------
 
 # Copy the controller-manager into a thin image
-FROM ${BASE_IMAGE}
+FROM gcr.io/distroless/static-debian11
+
+
+## --------------------------------------
+## Multi-platform support
+## --------------------------------------
+
+ARG TARGETOS
+ARG TARGETARCH
 
 
 ## --------------------------------------
@@ -26,12 +96,7 @@ ARG BUILD_VERSION
 ## Image labels
 ## --------------------------------------
 
-LABEL branch="${BUILD_BRANCH}" \
-      buildNumber="${BUILD_NUMBER}" \
-      commit="${BUILD_COMMIT}" \
-      name="VM Operator" \
-      vendor="Broadcom" \
-      version="${BUILD_VERSION}"
+LABEL buildNumber=$BUILD_NUMBER commit=$BUILD_COMMIT branch=$BUILD_BRANCH version=$BUILD_VERSION
 
 
 ## --------------------------------------
@@ -39,7 +104,7 @@ LABEL branch="${BUILD_BRANCH}" \
 ## --------------------------------------
 
 WORKDIR /
-COPY ./bin/manager .
-COPY ./bin/web-console-validator .
+COPY --from=builder /workspace/bin/manager .
+COPY --from=builder /workspace/bin/web-console-validator .
 USER nobody
 ENTRYPOINT ["/manager"]
