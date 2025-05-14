@@ -5667,6 +5667,108 @@ spec:
                     - ThickEagerZero
                     type: string
                 type: object
+              affinity:
+                description: Affinity describes the VM's scheduling constraints.
+                properties:
+                  zoneAffinity:
+                    description: ZoneAffinity describes affinity scheduling rules
+                      related to a zone.
+                    properties:
+                      zoneSelectorTerms:
+                        description: ZoneSelectorTerms is a list of zone selector
+                          terms. The terms are ORed.
+                        items:
+                          description: ZoneSelectorTerm defines the matching zone
+                            selector requirements for zone based affinity scheduling.
+                          properties:
+                            matchExpressions:
+                              description: |-
+                                MatchExpressions is a list of zone selector requirements by zone's
+                                labels.
+                              items:
+                                description: ZoneSelectorRequirement defines the key
+                                  value relationships for a matching zone selector.
+                                properties:
+                                  key:
+                                    description: Key is the label key to which the
+                                      selector applies.
+                                    type: string
+                                  operator:
+                                    description: |-
+                                      Operator represents a key's relationship to a set of values.
+                                      Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+                                    enum:
+                                    - In
+                                    - NotIn
+                                    - Exists
+                                    - DoesNotExist
+                                    - Gt
+                                    - Lt
+                                    type: string
+                                  values:
+                                    description: |-
+                                      Values is a list of values to which the operator applies.
+                                      If the operator is In or NotIn, the values list must be non-empty.
+                                      If the operator is Exists or DoesNotExist, the values list must be empty.
+                                      If the operator is Gt or Lt, the values list must have a single element,
+                                      which will be interpreted as an integer.
+                                    items:
+                                      type: string
+                                    type: array
+                                    x-kubernetes-list-type: atomic
+                                required:
+                                - key
+                                - operator
+                                type: object
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            matchFields:
+                              description: MatchFields is a list of zone selector
+                                requirements by zone's fields.
+                              items:
+                                description: ZoneSelectorRequirement defines the key
+                                  value relationships for a matching zone selector.
+                                properties:
+                                  key:
+                                    description: Key is the label key to which the
+                                      selector applies.
+                                    type: string
+                                  operator:
+                                    description: |-
+                                      Operator represents a key's relationship to a set of values.
+                                      Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.
+                                    enum:
+                                    - In
+                                    - NotIn
+                                    - Exists
+                                    - DoesNotExist
+                                    - Gt
+                                    - Lt
+                                    type: string
+                                  values:
+                                    description: |-
+                                      Values is a list of values to which the operator applies.
+                                      If the operator is In or NotIn, the values list must be non-empty.
+                                      If the operator is Exists or DoesNotExist, the values list must be empty.
+                                      If the operator is Gt or Lt, the values list must have a single element,
+                                      which will be interpreted as an integer.
+                                    items:
+                                      type: string
+                                    type: array
+                                    x-kubernetes-list-type: atomic
+                                required:
+                                - key
+                                - operator
+                                type: object
+                              type: array
+                              x-kubernetes-list-type: atomic
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                    required:
+                    - zoneSelectorTerms
+                    type: object
+                type: object
               biosUUID:
                 description: |-
                   BiosUUID describes the desired BIOS UUID for a VM.
