@@ -271,6 +271,32 @@ func TestVirtualMachineConversion(t *testing.T) {
 					EFISecureBootEnabled: false,
 					NetworkBootProtocol:  vmopv1.VirtualMachineBootOptionsNetworkBootProtocolIP4,
 				},
+				Affinity: &vmopv1.VirtualMachineAffinitySpec{
+					ZoneAffinity: &vmopv1.VirtualMachineAffinityZoneAffinitySpec{
+						ZoneSelectorTerms: []vmopv1.ZoneSelectorTerm{
+							{
+								MatchExpressions: []vmopv1.ZoneSelectorRequirement{
+									{
+										Key:      "foo",
+										Operator: vmopv1.ZoneSelectorOpExists,
+										Values: []string{
+											"bar",
+										},
+									},
+								},
+								MatchFields: []vmopv1.ZoneSelectorRequirement{
+									{
+										Key:      "zone-weight",
+										Operator: vmopv1.ZoneSelectorOpGt,
+										Values: []string{
+											"100",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		}
 
