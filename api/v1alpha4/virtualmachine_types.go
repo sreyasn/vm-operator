@@ -895,6 +895,15 @@ type VirtualMachineSpec struct {
 	// virtual machine. These settings take effect during the next power-on of the
 	// virtual machine.
 	BootOptions *VirtualMachineBootOptions `json:"bootOptions,omitempty"`
+
+	// +optional
+
+	// CurrentSnapshot describes the desired name of the VirtualMachineSnapshot custom resource that the
+	// VirtualMachine should point to.
+
+	// Please note attempts to modify the value of this field by a DevOps user
+	// will result in a validation error.
+	CurrentSnapshot *vmopv1common.LocalObjectRef `json:"currentSnapshot,omitempty"`
 }
 
 // VirtualMachineReservedSpec describes a set of VM configuration options
@@ -1079,6 +1088,16 @@ type VirtualMachineStatus struct {
 	// TaskID describes the observed ID of the task created by VM Operator to
 	// perform some long-running operation on the VM.
 	TaskID string `json:"taskID,omitempty"`
+
+	// +optional
+
+	// RootSnapshots is the list of root snapshots for the VirtualMachine.
+	RootSnapshots []*vmopv1common.LocalObjectRef `json:"rootSnapshots,omitempty"`
+
+	// +optional
+
+	// CurrentSnapshot is the current snapshot for the VirtualMachine.
+	CurrentSnapshot *vmopv1common.LocalObjectRef `json:"currentSnapshot,omitempty"`
 }
 
 // +kubebuilder:object:root=true
