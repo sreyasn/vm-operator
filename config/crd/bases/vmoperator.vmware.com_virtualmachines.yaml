@@ -5670,6 +5670,338 @@ spec:
               affinity:
                 description: Affinity describes the VM's scheduling constraints.
                 properties:
+                  vmAffinity:
+                    description: VMAffinity describes affinity scheduling rules related
+                      to other VMs.
+                    properties:
+                      preferredDuringSchedulingIgnoredDuringExecution:
+                        description: |-
+                          PreferredDuringSchedulingIgnoredDuringExecution describes affinity
+                          requirements that should be met, but the VM can still be scheduled if
+                          the requirement cannot be satisfied. The scheduler will prefer to schedule VMs to nodes
+                          that satisfy the anti-affinity expressions specified by this field, but it may choose a node that
+                          violates one or more of the expressions. The node that is most preferred is the one with the
+                          greatest sum of weights.
+
+                          When there are multiple elements, the lists of nodes corresponding to
+                          each term are intersected, i.e. all terms must be satisfied.
+                        items:
+                          description: WeightedVMAffinityTerm defines the weighted
+                            VM affinity/anti-affinity term.
+                          properties:
+                            vmAffinityTerm:
+                              description: VMAffinityTerm describes the affinity term.
+                              properties:
+                                labelSelector:
+                                  description: |-
+                                    LabelSelector is a label query over a set of VMs.
+                                    When omitted, this term matches with no VMs.
+                                  properties:
+                                    matchExpressions:
+                                      description: matchExpressions is a list of label
+                                        selector requirements. The requirements are
+                                        ANDed.
+                                      items:
+                                        description: |-
+                                          A label selector requirement is a selector that contains values, a key, and an operator that
+                                          relates the key and values.
+                                        properties:
+                                          key:
+                                            description: key is the label key that
+                                              the selector applies to.
+                                            type: string
+                                          operator:
+                                            description: |-
+                                              operator represents a key's relationship to a set of values.
+                                              Valid operators are In, NotIn, Exists and DoesNotExist.
+                                            type: string
+                                          values:
+                                            description: |-
+                                              values is an array of string values. If the operator is In or NotIn,
+                                              the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                              the values array must be empty. This array is replaced during a strategic
+                                              merge patch.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      description: |-
+                                        matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                        map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                        operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                      type: object
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                topologyKey:
+                                  description: |-
+                                    TopologyKey describes where this VM should be co-located (affinity) or not
+                                    co-located (anti-affinity). The value is used to match a label on a node, i.e. when
+                                    set to topology.kubernetes.io/zone, it means this term applies to nodes
+                                    with that label present.
+                                  type: string
+                              required:
+                              - topologyKey
+                              type: object
+                            weight:
+                              description: Weight describes the weight of the associated
+                                term.
+                              format: int32
+                              maximum: 100
+                              minimum: 1
+                              type: integer
+                          required:
+                          - vmAffinityTerm
+                          - weight
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        description: |-
+                          RequiredDuringSchedulingIgnoredDuringExecution describes affinity
+                          requirements that must be met or the VM will not be scheduled.
+
+                          When there are multiple elements, the lists of nodes corresponding to
+                          each term are intersected, i.e. all terms must be satisfied.
+                        items:
+                          description: VMAffinityTerm defines the VM affinity/anti-affinity
+                            term.
+                          properties:
+                            labelSelector:
+                              description: |-
+                                LabelSelector is a label query over a set of VMs.
+                                When omitted, this term matches with no VMs.
+                              properties:
+                                matchExpressions:
+                                  description: matchExpressions is a list of label
+                                    selector requirements. The requirements are ANDed.
+                                  items:
+                                    description: |-
+                                      A label selector requirement is a selector that contains values, a key, and an operator that
+                                      relates the key and values.
+                                    properties:
+                                      key:
+                                        description: key is the label key that the
+                                          selector applies to.
+                                        type: string
+                                      operator:
+                                        description: |-
+                                          operator represents a key's relationship to a set of values.
+                                          Valid operators are In, NotIn, Exists and DoesNotExist.
+                                        type: string
+                                      values:
+                                        description: |-
+                                          values is an array of string values. If the operator is In or NotIn,
+                                          the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                          the values array must be empty. This array is replaced during a strategic
+                                          merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: |-
+                                    matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                    map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                    operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                  type: object
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            topologyKey:
+                              description: |-
+                                TopologyKey describes where this VM should be co-located (affinity) or not
+                                co-located (anti-affinity). The value is used to match a label on a node, i.e. when
+                                set to topology.kubernetes.io/zone, it means this term applies to nodes
+                                with that label present.
+                              type: string
+                          required:
+                          - topologyKey
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                    type: object
+                  vmAntiAffinity:
+                    description: VMAntiAffinity describes anti-affinity scheduling
+                      rules related to other VMs.
+                    properties:
+                      preferredDuringSchedulingIgnoredDuringExecution:
+                        description: |-
+                          PreferredDuringSchedulingIgnoredDuringExecution describes anti-affinity
+                          requirements that should be met, but the VM can still be scheduled if
+                          the requirement cannot be satisfied. The scheduler will prefer to schedule VMs to nodes
+                          that satisfy the affinity expressions specified by this field, but it may choose a node that
+                          violates one or more of the expressions. The node that is most preferred is the one with the
+                          greatest sum of weights.
+
+                          When there are multiple elements, the lists of nodes corresponding to
+                          each term are intersected, i.e. all terms must be satisfied.
+                        items:
+                          description: WeightedVMAffinityTerm defines the weighted
+                            VM affinity/anti-affinity term.
+                          properties:
+                            vmAffinityTerm:
+                              description: VMAffinityTerm describes the affinity term.
+                              properties:
+                                labelSelector:
+                                  description: |-
+                                    LabelSelector is a label query over a set of VMs.
+                                    When omitted, this term matches with no VMs.
+                                  properties:
+                                    matchExpressions:
+                                      description: matchExpressions is a list of label
+                                        selector requirements. The requirements are
+                                        ANDed.
+                                      items:
+                                        description: |-
+                                          A label selector requirement is a selector that contains values, a key, and an operator that
+                                          relates the key and values.
+                                        properties:
+                                          key:
+                                            description: key is the label key that
+                                              the selector applies to.
+                                            type: string
+                                          operator:
+                                            description: |-
+                                              operator represents a key's relationship to a set of values.
+                                              Valid operators are In, NotIn, Exists and DoesNotExist.
+                                            type: string
+                                          values:
+                                            description: |-
+                                              values is an array of string values. If the operator is In or NotIn,
+                                              the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                              the values array must be empty. This array is replaced during a strategic
+                                              merge patch.
+                                            items:
+                                              type: string
+                                            type: array
+                                            x-kubernetes-list-type: atomic
+                                        required:
+                                        - key
+                                        - operator
+                                        type: object
+                                      type: array
+                                      x-kubernetes-list-type: atomic
+                                    matchLabels:
+                                      additionalProperties:
+                                        type: string
+                                      description: |-
+                                        matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                        map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                        operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                      type: object
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                topologyKey:
+                                  description: |-
+                                    TopologyKey describes where this VM should be co-located (affinity) or not
+                                    co-located (anti-affinity). The value is used to match a label on a node, i.e. when
+                                    set to topology.kubernetes.io/zone, it means this term applies to nodes
+                                    with that label present.
+                                  type: string
+                              required:
+                              - topologyKey
+                              type: object
+                            weight:
+                              description: Weight describes the weight of the associated
+                                term.
+                              format: int32
+                              maximum: 100
+                              minimum: 1
+                              type: integer
+                          required:
+                          - vmAffinityTerm
+                          - weight
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        description: |-
+                          RequiredDuringSchedulingIgnoredDuringExecution describes anti-affinity
+                          requirements that must be met or the VM will not be scheduled.
+
+                          When there are multiple elements, the lists of nodes corresponding to
+                          each term are intersected, i.e. all terms must be satisfied.
+                        items:
+                          description: VMAffinityTerm defines the VM affinity/anti-affinity
+                            term.
+                          properties:
+                            labelSelector:
+                              description: |-
+                                LabelSelector is a label query over a set of VMs.
+                                When omitted, this term matches with no VMs.
+                              properties:
+                                matchExpressions:
+                                  description: matchExpressions is a list of label
+                                    selector requirements. The requirements are ANDed.
+                                  items:
+                                    description: |-
+                                      A label selector requirement is a selector that contains values, a key, and an operator that
+                                      relates the key and values.
+                                    properties:
+                                      key:
+                                        description: key is the label key that the
+                                          selector applies to.
+                                        type: string
+                                      operator:
+                                        description: |-
+                                          operator represents a key's relationship to a set of values.
+                                          Valid operators are In, NotIn, Exists and DoesNotExist.
+                                        type: string
+                                      values:
+                                        description: |-
+                                          values is an array of string values. If the operator is In or NotIn,
+                                          the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                          the values array must be empty. This array is replaced during a strategic
+                                          merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: |-
+                                    matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                    map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                    operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                  type: object
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            topologyKey:
+                              description: |-
+                                TopologyKey describes where this VM should be co-located (affinity) or not
+                                co-located (anti-affinity). The value is used to match a label on a node, i.e. when
+                                set to topology.kubernetes.io/zone, it means this term applies to nodes
+                                with that label present.
+                              type: string
+                          required:
+                          - topologyKey
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                    type: object
                   zoneAffinity:
                     description: ZoneAffinity describes affinity scheduling rules
                       related to a zone.

@@ -293,6 +293,56 @@ func TestVirtualMachineConversion(t *testing.T) {
 							},
 						},
 					},
+					VMAffinity: &vmopv1.VirtualMachineAffinityVMAffinitySpec{
+						RequiredDuringSchedulingIgnoredDuringExecution: []vmopv1.VMAffinityTerm{
+							{
+								LabelSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"foo": "bar",
+									},
+								},
+								TopologyKey: "topology.kubernetes.io/abc",
+							},
+						},
+						PreferredDuringSchedulingIgnoredDuringExecution: []vmopv1.WeightedVMAffinityTerm{
+							{
+								Weight: 100,
+								VMAffinityTerm: vmopv1.VMAffinityTerm{
+									LabelSelector: &metav1.LabelSelector{
+										MatchLabels: map[string]string{
+											"app": "trivia",
+										},
+									},
+									TopologyKey: "topology.kubernetes.io/xyz",
+								},
+							},
+						},
+					},
+					VMAntiAffinity: &vmopv1.VirtualMachineAntiAffinityVMAffinitySpec{
+						RequiredDuringSchedulingIgnoredDuringExecution: []vmopv1.VMAffinityTerm{
+							{
+								LabelSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"app": "chess",
+									},
+								},
+								TopologyKey: "topology.kubernetes.io/def",
+							},
+						},
+						PreferredDuringSchedulingIgnoredDuringExecution: []vmopv1.WeightedVMAffinityTerm{
+							{
+								Weight: 200,
+								VMAffinityTerm: vmopv1.VMAffinityTerm{
+									LabelSelector: &metav1.LabelSelector{
+										MatchLabels: map[string]string{
+											"app": "lego",
+										},
+									},
+									TopologyKey: "topology.kubernetes.io/ghi",
+								},
+							},
+						},
+					},
 				},
 			},
 		}
