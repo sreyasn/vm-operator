@@ -6,6 +6,7 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/vmware-tanzu/vm-operator/controllers/virtualmachinesnapshot"
 
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -71,6 +72,14 @@ func AddToManager(ctx *pkgctx.ControllerManagerContext, mgr manager.Manager) err
 		if err := virtualmachineimagecache.AddToManager(ctx, mgr); err != nil {
 			return fmt.Errorf("failed to initialize VMI controllers: %w", err)
 		}
+	}
+
+	if err := virtualmachinepublishrequest.AddToManager(ctx, mgr); err != nil {
+		return fmt.Errorf("failed to initialize VirtualMachinePublishRequest controller: %w", err)
+	}
+
+	if err := virtualmachinesnapshot.AddToManager(ctx, mgr); err != nil {
+		return fmt.Errorf("failed to initialize VirtualMachineSnapshot controller: %w", err)
 	}
 
 	return nil
