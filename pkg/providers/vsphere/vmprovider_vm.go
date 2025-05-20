@@ -796,6 +796,29 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 		return fmt.Errorf("failed to reconcile power state: %w", err)
 	}
 
+	// create snapshots of VM if necessary
+	{
+		// current snapshot is not up-to-date.
+		if !reflect.DeepEqual(vmCtx.VM.Spec.CurrentSnapshot, vmCtx.VM.Status.CurrentSnapshot) {
+			// get VirtualMachineSnapshot object
+			vmSnapshot, err := getVirtualMachineSnapShotObject(vmCtx, vs.k8sClient)
+			if err != nil {
+				return err
+			}
+
+			snapShotArgs := virtualmachine.SnapshotArgs{
+				VMCtx:      vmCtx,
+				VcVM:       vcVM,
+				VMSnapshot: vmSnapshot,
+			}
+
+			err = virtualmachine.SnapshotVirtualMachine(snapShotArgs)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return reconcileErr
 }
 
