@@ -11,6 +11,7 @@ import (
 	"maps"
 	"math/rand"
 	"path"
+	"reflect"
 	"strings"
 	"sync"
 	"text/template"
@@ -797,26 +798,11 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 	}
 
 	// create snapshots of VM if necessary
-	{
-		// current snapshot is not up-to-date.
-		if !reflect.DeepEqual(vmCtx.VM.Spec.CurrentSnapshot, vmCtx.VM.Status.CurrentSnapshot) {
-			// get VirtualMachineSnapshot object
-			vmSnapshot, err := getVirtualMachineSnapShotObject(vmCtx, vs.k8sClient)
-			if err != nil {
-				return err
-			}
-
-			snapShotArgs := virtualmachine.SnapshotArgs{
-				VMCtx:      vmCtx,
-				VcVM:       vcVM,
-				VMSnapshot: vmSnapshot,
-			}
-
-			err = virtualmachine.SnapshotVirtualMachine(snapShotArgs)
-			if err != nil {
-				return err
-			}
+	if err := vs.reconcileSnapshot(vmCtx, vcVM); err != nil {
+		if pkgerr.IsNoRequeueError(err) {
+			return err
 		}
+		return fmt.Errorf("failed to reconcile snapshots: %w", err)
 	}
 
 	return reconcileErr
@@ -1063,6 +1049,41 @@ func (vs *vSphereVMProvider) reconcilePowerState(
 			vmCtx.VM.Annotations[vmopv1.FirstBootDoneAnnotation] = "true"
 		}
 
+		return err
+	}
+
+	return nil
+}
+
+func (vs *vSphereVMProvider) reconcileSnapshot(
+	vmCtx pkgctx.VirtualMachineContext,
+	vcVM *object.VirtualMachine) error {
+	// no need for snapshot or current snapshot is up-to-date
+	if vmCtx.VM.Spec.CurrentSnapshot == nil || reflect.DeepEqual(vmCtx.VM.Spec.CurrentSnapshot, vmCtx.VM.Status.CurrentSnapshot) {
+		return nil
+	}
+
+	// get VirtualMachineSnapshot object
+	vmSnapshot, err := getVirtualMachineSnapShotObject(vmCtx, vs.k8sClient)
+	if err != nil {
+		return err
+	}
+
+	snapArgs := virtualmachine.SnapshotArgs{
+		VMCtx:      vmCtx,
+		VcVM:       vcVM,
+		VMSnapshot: vmSnapshot,
+	}
+
+	vmCtx.Logger.Info("Taking a snapshot of VM Service managed VM")
+	err = virtualmachine.SnapshotVirtualMachine(snapArgs)
+	if err != nil {
+		vmCtx.Logger.Error(err, "failed to snapshot virtual machine")
+		return err
+	}
+
+	if err = PatchSnapshotStatus(snapArgs.VMCtx, vs.k8sClient,
+		snapArgs.VMSnapshot.Name, snapArgs.VMSnapshot.Namespace); err != nil {
 		return err
 	}
 

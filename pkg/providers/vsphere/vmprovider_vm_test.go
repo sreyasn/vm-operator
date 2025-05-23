@@ -35,7 +35,7 @@ import (
 	vimtypes "github.com/vmware/govmomi/vim25/types"
 
 	vmopv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha4"
-	"github.com/vmware-tanzu/vm-operator/api/v1alpha4/common"
+	vmopv1common "github.com/vmware-tanzu/vm-operator/api/v1alpha4/common"
 	backupapi "github.com/vmware-tanzu/vm-operator/pkg/backup/api"
 	"github.com/vmware-tanzu/vm-operator/pkg/conditions"
 	pkgcfg "github.com/vmware-tanzu/vm-operator/pkg/config"
@@ -226,7 +226,7 @@ func vmTests() {
 				vm.Spec.Network.Interfaces = []vmopv1.VirtualMachineNetworkInterfaceSpec{
 					{
 						Name:    "eth0",
-						Network: &common.PartialObjectRef{Name: dvpgName},
+						Network: &vmopv1common.PartialObjectRef{Name: dvpgName},
 					},
 				}
 
@@ -2639,11 +2639,11 @@ func vmTests() {
 						vm.Spec.Network.Interfaces = []vmopv1.VirtualMachineNetworkInterfaceSpec{
 							{
 								Name:    "eth0",
-								Network: &common.PartialObjectRef{Name: "VM Network"},
+								Network: &vmopv1common.PartialObjectRef{Name: "VM Network"},
 							},
 							{
 								Name:    "eth1",
-								Network: &common.PartialObjectRef{Name: dvpgName},
+								Network: &vmopv1common.PartialObjectRef{Name: dvpgName},
 							},
 						}
 					})
@@ -3483,7 +3483,7 @@ func vmTests() {
 							vm.Spec.Network.Interfaces = []vmopv1.VirtualMachineNetworkInterfaceSpec{
 								{
 									Name: "eth0",
-									Network: &common.PartialObjectRef{
+									Network: &vmopv1common.PartialObjectRef{
 										Name: "VM Network",
 									},
 								},
@@ -3759,7 +3759,76 @@ func vmTests() {
 					})
 				})
 			})
+		})
 
+		Context("VM Snapshots", func() {
+			var (
+				vmSnapshot *vmopv1.VirtualMachineSnapshot
+			)
+
+			BeforeEach(func() {
+				vmSnapshot = builder.DummyVirtualMachineSnapshot("", "test-snap", vm.Name)
+			})
+
+			JustBeforeEach(func() {
+				vmSnapshot.Namespace = nsInfo.Namespace
+			})
+
+			Context("vm snapshot object doesn't exist", func() {
+				BeforeEach(func() {
+					vm.Spec.CurrentSnapshot = &vmopv1common.LocalObjectRef{
+						APIVersion: vmSnapshot.APIVersion,
+						Kind:       vmSnapshot.Kind,
+						Name:       vmSnapshot.Name,
+					}
+				})
+
+				It("return obj not found err", func() {
+					err := createOrUpdateVM(ctx, vmProvider, vm)
+					Expect(err).ToNot(BeNil())
+					Expect(err.Error()).To(ContainSubstring("virtualmachinesnapshots.vmoperator.vmware.com \"test-snap\" not found"))
+				})
+			})
+
+			Context("create new vm snapshot and patch status", func() {
+				BeforeEach(func() {
+					vm.Spec.CurrentSnapshot = &vmopv1common.LocalObjectRef{
+						APIVersion: vmSnapshot.APIVersion,
+						Kind:       vmSnapshot.Kind,
+						Name:       vmSnapshot.Name,
+					}
+				})
+
+				It("success", func() {
+					// create the snapshot obj
+					Expect(ctx.Client.Create(ctx, vmSnapshot)).To(Succeed())
+
+					vcVM, err := createOrUpdateAndGetVcVM(ctx, vmProvider, vm)
+					Expect(err).To(BeNil())
+					Expect(vcVM).ToNot(BeNil())
+					snap, err := vcVM.FindSnapshot(ctx, vmSnapshot.Name)
+					Expect(err).To(BeNil())
+					Expect(snap).ToNot(BeNil())
+
+					Expect(vm.Status.CurrentSnapshot).To(Equal(&vmopv1common.LocalObjectRef{
+						APIVersion: vmSnapshot.APIVersion,
+						Kind:       vmSnapshot.Kind,
+						Name:       vmSnapshot.Name,
+					}))
+
+					snapObj := &vmopv1.VirtualMachineSnapshot{}
+					err = ctx.Client.Get(ctx, client.ObjectKey{Name: vmSnapshot.Name, Namespace: vmSnapshot.Namespace}, snapObj)
+					Expect(err).To(BeNil())
+					Expect(snapObj.Status).To(Equal(vmopv1.VirtualMachineSnapshotStatus{
+						UniqueID:   vm.Status.UniqueID,
+						PowerState: vmopv1.VirtualMachinePowerStateOn,
+						Quiesced:   false,
+						Conditions: []metav1.Condition{{
+							Type: vmopv1.VirtualMachineSnapshotReadyCondition,
+						}},
+					}))
+				})
+			})
 		})
 	})
 }

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/google/uuid"
 	vimtypes "github.com/vmware/govmomi/vim25/types"
@@ -758,4 +759,35 @@ func isVMPaused(vmCtx pkgctx.VirtualMachineContext) bool {
 	}
 	delete(vmCtx.VM.Labels, vmopv1.PausedVMLabelKey)
 	return false
+}
+
+func PatchSnapshotStatus(vmCtx pkgctx.VirtualMachineContext, k8sClient ctrlclient.Client,
+	objName string, objNs string) error {
+	snapShot := &vmopv1.VirtualMachineSnapshot{}
+	objKey := ctrlclient.ObjectKey{Name: objName, Namespace: objNs}
+	// get snapshot again to ensure it's up-to-date.
+	err := k8sClient.Get(vmCtx, objKey, snapShot)
+	if err != nil {
+		vmCtx.Logger.Error(err, "failed to get snapshot resource", "snapshot", objKey)
+		return err
+	}
+
+	snapPatch := ctrlclient.MergeFrom(snapShot.DeepCopy())
+	vmStatus := vmCtx.VM.Status
+
+	snapShot.Status.UniqueID = vmCtx.VM.Status.UniqueID
+	snapShot.Status = vmopv1.VirtualMachineSnapshotStatus{
+		UniqueID:   vmStatus.UniqueID,
+		PowerState: vmStatus.PowerState,
+		Quiesced:   snapShot.Spec.Quiesce != nil,
+		Conditions: []metav1.Condition{{Type: vmopv1.VirtualMachineSnapshotReadyCondition}},
+		// TODO: populate children
+	}
+
+	if err := k8sClient.Status().Patch(vmCtx, snapShot, snapPatch); err != nil {
+		return fmt.Errorf(
+			"failed to patch snapshot status resource %s: err: %s", objKey, err.Error())
+	}
+
+	return nil
 }

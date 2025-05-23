@@ -4,11 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
 	"reflect"
 	"strings"
-
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -17,14 +14,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	vmopv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha4"
+	vmopv1common "github.com/vmware-tanzu/vm-operator/api/v1alpha4/common"
 	pkgcfg "github.com/vmware-tanzu/vm-operator/pkg/config"
 	pkgctx "github.com/vmware-tanzu/vm-operator/pkg/context"
 	"github.com/vmware-tanzu/vm-operator/pkg/patch"
 	"github.com/vmware-tanzu/vm-operator/pkg/record"
-)
-
-const (
-	finalizerName = "vmoperator.vmware.com/virtualmachinesnapshot"
 )
 
 // AddToManager adds this package's controller to the provided manager.
@@ -95,6 +89,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 		return ctrl.Result{}, fmt.Errorf("failed to init patch helper for %s: %w", vmSnapShotCtx, err)
 	}
 	defer func() {
+		vmSnapShotCtx.Logger.Info("Patching VirtualMachineSnapShot", "snap", vmSnapShot)
 		if err := patchHelper.Patch(ctx, vmSnapShot); err != nil {
 			if reterr == nil {
 				reterr = err
@@ -120,20 +115,16 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 	ctx.Logger.Info("Reconciling VirtualMachineSnapshot")
 	vmSnapShot := ctx.VirtualMachineSnapshot
 
-	if !controllerutil.ContainsFinalizer(vmSnapShot, finalizerName) {
-
-		// The finalizer must be present before proceeding in order to ensure that the VirtualMachineSnapshot will
-		// be cleaned up. Return immediately after here to let the patcher helper update the
-		// object, and then we'll proceed on the next reconciliation.
-		controllerutil.AddFinalizer(vmSnapShot, finalizerName)
-		return nil
+	// return early if phase was already set; nothing to do
+	if conditions := ctx.VirtualMachineSnapshot.Status.Conditions; len(conditions) != 0 {
+		for _, c := range conditions {
+			if c.Type == vmopv1.VirtualMachineSnapshotReadyCondition {
+				return nil
+			}
+		}
 	}
 
-	// return early if succeeded; nothing to do
-	if phase := ctx.VirtualMachineSnapshot.Status.Phase; phase != nil && *phase == vmopv1.VMSnapshotSucceeded {
-		return nil
-	}
-
+	ctx.Logger.Info("Fetching VirtualMachine from snapshot object", "vmSnapshot", vmSnapShot.Name)
 	vm := &vmopv1.VirtualMachine{}
 	objKey := client.ObjectKey{Name: vmSnapShot.Spec.VMRef.Name, Namespace: vmSnapShot.Namespace}
 	err := r.Get(ctx, objKey, vm)
@@ -148,8 +139,10 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 		return err
 	}
 
-	objRef := &corev1.LocalObjectReference{
-		Name: ctx.VirtualMachineSnapshot.Name,
+	objRef := &vmopv1common.LocalObjectRef{
+		APIVersion: vmSnapShot.APIVersion,
+		Kind:       vmSnapShot.Kind,
+		Name:       ctx.VirtualMachineSnapshot.Name,
 	}
 
 	// vm object already set with snapshot reference
