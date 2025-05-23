@@ -136,12 +136,13 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 		return nil
 	}
 
-	// return early if succeeded; nothing to do
-	if phase := ctx.VirtualMachineSnapshot.Status.Phase; phase != nil && *phase == vmopv1.VMSnapshotSucceeded {
+	// return early if phase was already set; nothing to do
+	if phase := ctx.VirtualMachineSnapshot.Status.Phase; phase != nil {
 		return nil
 	}
 
 	vm := &vmopv1.VirtualMachine{}
+	ctx.Logger.Info("Fetching VM from snapshot obj:", "vmSnapshot obj", vmSnapShot)
 	objKey := client.ObjectKey{Name: vmSnapShot.Spec.Source.Name, Namespace: vmSnapShot.Namespace}
 	err := r.Get(ctx, objKey, vm)
 	if err != nil {
@@ -181,6 +182,9 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 			"failed to patch VM resource %s with current snapshot %s: %w", objKey,
 			ctx.VirtualMachineSnapshot.Name, err)
 	}
+
+	inProgress := vmopv1.VMSnapshotInProgress
+	ctx.VirtualMachineSnapshot.Status.Phase = &inProgress
 
 	return nil
 }

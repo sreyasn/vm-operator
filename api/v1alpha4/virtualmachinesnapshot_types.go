@@ -56,7 +56,6 @@ type VirtualMachineSnapshotSpec struct {
 	Memory *bool `json:"memory,omitempty"`
 
 	// +optional
-	// +kubebuilder:default=false
 
 	// Quiesce represents the spec used for granular control over quiesce details.
 	// If quiesceSpec is set and the virtual machine is powered on when the
@@ -74,7 +73,7 @@ type VirtualMachineSnapshotSpec struct {
 
 	// Source represents the source VM for which the Snapshot is
 	// requested.
-	Source *vmopv1common.LocalObjectRef `json:"source:omitempty"`
+	Source *vmopv1common.LocalObjectRef `json:"source,omitempty"`
 }
 
 // VirtualMachineSnapshotStatus defines the observed state of VirtualMachineSnapshot.
@@ -82,7 +81,7 @@ type VirtualMachineSnapshotStatus struct {
 	// +optional
 
 	// Phase represents the phase of a VM snapshot operation.
-	Phase *VMSnapshotPhase `json:"phase:omitempty"`
+	Phase *VMSnapshotPhase `json:"phase,omitempty"`
 
 	// +optional
 
