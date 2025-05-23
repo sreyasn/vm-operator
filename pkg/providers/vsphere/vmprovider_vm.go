@@ -819,6 +819,7 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 				VMCtx:      vmCtx,
 				VcVM:       vcVM,
 				VMSnapshot: vmSnapshot,
+				K8sClient:  vs.k8sClient,
 			}
 
 			err = virtualmachine.SnapshotVirtualMachine(snapShotArgs)

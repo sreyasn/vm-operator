@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"strings"
 
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -120,19 +118,12 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 	ctx.Logger.Info("Reconciling VirtualMachineSnapshot")
 	vmSnapShot := ctx.VirtualMachineSnapshot
 
-	if !controllerutil.ContainsFinalizer(vmSnapShot, finalizerName) {
-
-		// The finalizer must be present before proceeding in order to ensure that the VirtualMachineSnapshot will
-		// be cleaned up. Return immediately after here to let the patcher helper update the
-		// object, and then we'll proceed on the next reconciliation.
-		controllerutil.AddFinalizer(vmSnapShot, finalizerName)
+	// return early if phase was already set; nothing to do
+	if phase := ctx.VirtualMachineSnapshot.Status.Phase; phase != nil {
 		return nil
 	}
 
-	// return early if succeeded; nothing to do
-	if phase := ctx.VirtualMachineSnapshot.Status.Phase; phase != nil && *phase == vmopv1.VMSnapshotSucceeded {
-		return nil
-	}
+	ctx.Logger.Info("Fetching VM from snapshot obj:", "vmSnapshot obj", vmSnapShot)
 
 	vm := &vmopv1.VirtualMachine{}
 	objKey := client.ObjectKey{Name: vmSnapShot.Spec.VMRef.Name, Namespace: vmSnapShot.Namespace}
@@ -172,6 +163,9 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 			"failed to patch VM resource %s with current snapshot %s: %w", objKey,
 			ctx.VirtualMachineSnapshot.Name, err)
 	}
+
+	inProgress := vmopv1.VMSnapshotInProgress
+	ctx.VirtualMachineSnapshot.Status.Phase = &inProgress
 
 	return nil
 }

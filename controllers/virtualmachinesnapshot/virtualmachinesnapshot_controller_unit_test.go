@@ -5,10 +5,9 @@
 package virtualmachinesnapshot_test
 
 import (
-	"time"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -40,19 +39,38 @@ func unitTestsReconcile() {
 
 		reconciler *virtualmachinesnapshot.Reconciler
 		vmSnapshot *vmopv1.VirtualMachineSnapshot
+		vm         *vmopv1.VirtualMachine
 	)
 
 	BeforeEach(func() {
 		initObjects = nil
+		vm = &vmopv1.VirtualMachine{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dummy-vm",
+				Namespace: ctx.Namespace,
+			},
+			Spec: vmopv1.VirtualMachineSpec{
+				ImageName:  "dummy-image",
+				PowerState: vmopv1.VirtualMachinePowerStateOn,
+			},
+		}
+
 		vmSnapshot = &vmopv1.VirtualMachineSnapshot{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "dummy-vmsnapshot",
+				Name:      "snap-1",
+				Namespace: ctx.Namespace,
+			},
+			Spec: vmopv1.VirtualMachineSnapshotSpec{
+				VMRef: corev1.TypedLocalObjectReference{
+					APIGroup: &[]string{vmopv1.GroupName}[0],
+					Kind:     vm.Kind,
+					Name:     vm.Name,
+				},
 			},
 		}
 	})
 
 	JustBeforeEach(func() {
-		initObjects = append(initObjects, vmSnapshot)
 		ctx = suite.NewUnitTestContextForController(initObjects...)
 		reconciler = virtualmachinesnapshot.NewReconciler(
 			ctx,
@@ -62,47 +80,82 @@ func unitTestsReconcile() {
 		)
 	})
 
+	AfterEach(func() {
+		ctx.AfterEach()
+		ctx = nil
+		initObjects = nil
+		reconciler = nil
+	})
+
 	Context("Reconcile", func() {
 		var (
-			err  error
-			name string
+			err error
 		)
 
 		BeforeEach(func() {
 			err = nil
-			name = vmSnapshot.Name
+			initObjects = append(initObjects, vmSnapshot)
 		})
 
 		JustBeforeEach(func() {
 			_, err = reconciler.Reconcile(ctx, reconcile.Request{
 				NamespacedName: types.NamespacedName{
 					Namespace: vmSnapshot.Namespace,
-					Name:      name,
+					Name:      vmSnapshot.Name,
 				}})
 		})
 
-		When("Deleted", func() {
-			BeforeEach(func() {
-				vmSnapshot.DeletionTimestamp = &metav1.Time{Time: time.Now()}
-				vmSnapshot.Finalizers = append(vmSnapshot.Finalizers, "fake.com/finalizer")
+		When("vm does not exist", func() {
+			It("returns failure", func() {
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(ContainSubstring("failed to get VirtualMachine"))
 			})
+		})
+
+		When("vm resource exists but not ready", func() {
+			BeforeEach(func() {
+				initObjects = append(initObjects, vm)
+			})
+
+			It("returns failure", func() {
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(ContainSubstring("VM hasn't been created and has no uniqueID"))
+			})
+		})
+
+		When("vm ready with matching current snapshot name", func() {
+			BeforeEach(func() {
+				vm.Status.UniqueID = "unique-vm-id"
+				vm.Spec.CurrentSnapshot = &corev1.LocalObjectReference{
+					Name: vmSnapshot.Name,
+				}
+				Expect(ctx.Client.Status().Update(ctx, vm)).To(Succeed())
+				initObjects = append(initObjects, vm)
+			})
+
 			It("returns success", func() {
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
 
-		When("Normal", func() {
+		When("vm ready with different/empty current snapshot ", func() {
+			BeforeEach(func() {
+				vm.Status.UniqueID = "unique-vm-id"
+				Expect(ctx.Client.Status().Update(ctx, vm)).To(Succeed())
+				initObjects = append(initObjects, vm)
+			})
+
 			It("returns success", func() {
 				Expect(err).ToNot(HaveOccurred())
-			})
-		})
+				objKey := types.NamespacedName{Name: vm.Name, Namespace: vm.Namespace}
+				vmObj := &vmopv1.VirtualMachine{}
+				Expect(ctx.Client.Get(ctx, objKey, vmObj)).To(Succeed())
 
-		When("vmSnapshot not found", func() {
-			BeforeEach(func() {
-				name = "invalid"
-			})
-			It("ignores the error", func() {
-				Expect(err).ToNot(HaveOccurred())
+				Expect(vmObj.Spec.CurrentSnapshot).To(Equal(&corev1.LocalObjectReference{
+					Name: vmSnapshot.Name,
+				}))
+
+				Expect(vmSnapshot.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
 			})
 		})
 	})
