@@ -21,7 +21,7 @@ var suite = builder.NewTestSuiteForControllerWithContext(
 	manager.InitializeProvidersNoopFn)
 
 func TestVirtualMachineSnapShot(t *testing.T) {
-	suite.Register(t, "VirtualMachineSnapShot controller suite", intgTests, unitTests)
+	suite.Register(t, "VirtualMachineSnapshot controller suite", intgTests, unitTests)
 }
 
 var _ = BeforeSuite(suite.BeforeSuite)

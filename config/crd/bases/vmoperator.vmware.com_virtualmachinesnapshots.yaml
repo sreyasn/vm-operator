@@ -60,7 +60,6 @@ spec:
                   in the snashot.
                 type: boolean
               quiesce:
-                default: false
                 description: |-
                   Quiesce represents the spec used for granular control over
                   quiesce details. If quiesceSpec is set and the virtual machine
@@ -78,7 +77,7 @@ spec:
                     format: int64
                     type: integer
                 type: object
-              vmRef:omitempty:
+              vmRef:
                 description: |-
                   VMRef represents the name of the virtual machine for which the
                   snapshot is requested.
@@ -100,8 +99,6 @@ spec:
                 - name
                 type: object
                 x-kubernetes-map-type: atomic
-            required:
-            - vmRef:omitempty
             type: object
           status:
             description: VirtualMachineSnapshotStatus defines the observed state of
@@ -191,10 +188,10 @@ spec:
                   - type
                   type: object
                 type: array
-              phase:omitempty:
+              phase:
                 description: Phase represents the phase of a VM snapshot operation.
                 type: string
-              powerState:omitempty:
+              powerState:
                 description: |-
                   PowerState represents the observed power state of the virtual
                   machine when the snapshot was taken.
@@ -203,7 +200,7 @@ spec:
                 - PoweredOn
                 - Suspended
                 type: string
-              quiesced:omitempty:
+              quiesced:
                 description: |-
                   Quiesced represents whether or not the snapshot was created
                   with the quiesce option to ensure a snapshot with a consistent

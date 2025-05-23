@@ -354,7 +354,7 @@ generate-go: $(CONTROLLER_GEN)
 generate-go: ## Generate golang sources
 	go -C ./api generate ./...
 	$(CONTROLLER_GEN) \
-		paths=github.com/vmware-tanzu/vm-operator/api/... \
+		paths=./api/... \
 		object:headerFile=./hack/boilerplate/boilerplate.generatego.txt
 	$(CONTROLLER_GEN) \
 		paths=github.com/vmware-tanzu/vm-operator/external/storage-policy-quota/... \
@@ -378,7 +378,7 @@ generate-go: ## Generate golang sources
 generate-manifests: $(CONTROLLER_GEN)
 generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
 	$(CONTROLLER_GEN) \
-		paths=github.com/vmware-tanzu/vm-operator/api/... \
+		paths=./api/... \
 		crd:crdVersions=v1 \
 		output:crd:dir=$(CRD_ROOT) \
 		output:none
@@ -414,7 +414,7 @@ generate-external-manifests: ## Generate manifests for the external types for te
 		output:crd:dir=$(EXTERNAL_CRD_ROOT) \
 		output:none
 	$(CONTROLLER_GEN) \
-		paths=github.com/vmware-tanzu/vm-operator/external/storage-policy-quota/... \
+		paths=./external/storage-policy-quota/... \
 		crd:crdVersions=v1 \
 		output:crd:dir=$(EXTERNAL_CRD_ROOT) \
 		output:none
