@@ -92,6 +92,10 @@ func unitTestsReconcile() {
 			err error
 		)
 
+		const (
+			dummyVmUuid = "unique-vm-id"
+		)
+
 		BeforeEach(func() {
 			err = nil
 			initObjects = append(initObjects, vmSnapshot)
@@ -125,7 +129,7 @@ func unitTestsReconcile() {
 
 		When("vm ready with matching current snapshot name", func() {
 			BeforeEach(func() {
-				vm.Status.UniqueID = "unique-vm-id"
+				vm.Status.UniqueID = dummyVmUuid
 				vm.Spec.CurrentSnapshot = &corev1.LocalObjectReference{
 					Name: vmSnapshot.Name,
 				}
@@ -140,7 +144,7 @@ func unitTestsReconcile() {
 
 		When("vm ready with different/empty current snapshot ", func() {
 			BeforeEach(func() {
-				vm.Status.UniqueID = "unique-vm-id"
+				vm.Status.UniqueID = dummyVmUuid
 				Expect(ctx.Client.Status().Update(ctx, vm)).To(Succeed())
 				initObjects = append(initObjects, vm)
 			})
