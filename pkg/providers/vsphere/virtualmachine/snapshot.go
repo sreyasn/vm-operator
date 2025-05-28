@@ -94,7 +94,7 @@ func createSnapshot(vmCtx pkgctx.VirtualMachineContext, vcVM *object.VirtualMach
 }
 
 func updateVMStatusCurrentSnapshot(vmCtx pkgctx.VirtualMachineContext, obj vmopv1.VirtualMachineSnapshot) {
-	vmCtx.VM.Status.CurrentSnapshot = &corev1.TypedObjectReference{
+	vmCtx.VM.Status.CurrentSnapshot = &corev1.TypedLocalObjectReference{
 		APIGroup: &[]string{vmopv1.GroupName}[0],
 		Kind:     obj.Kind,
 		Name:     obj.Name,
@@ -115,12 +115,9 @@ func patchSnapshotStatus(vmCtx pkgctx.VirtualMachineContext, k8sClient client.Cl
 
 	snapPatch := client.MergeFrom(snapShot.DeepCopy())
 	if !success {
-		failedPhase := vmopv1.VMSnapshotFailed
-		snapShot.Status.Phase = &failedPhase
-
+		snapShot.Status.Phase = vmopv1.VMSnapshotFailed
 	} else {
-		successPhase := vmopv1.VMSnapshotSucceeded
-		snapShot.Status.Phase = &successPhase
+		snapShot.Status.Phase = vmopv1.VMSnapshotSucceeded
 	}
 
 	if err := k8sClient.Status().Patch(vmCtx, snapShot, snapPatch); err != nil {
