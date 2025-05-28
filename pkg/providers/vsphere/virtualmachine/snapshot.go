@@ -25,29 +25,34 @@ func SnapshotVirtualMachine(args SnapshotArgs) error {
 	vm := args.VcVM
 
 	// find snapshot by name
-	snap, err := vm.FindSnapshot(args.VMCtx, obj.Name)
+	snap, _ := vm.FindSnapshot(args.VMCtx, obj.Name)
 	if snap != nil {
 
 		// update vm.status with currentSnapshot
 		updateVMStatusCurrentSnapshot(args.VMCtx, obj)
 		// patch the snapShot status
-		patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, true)
+		if err := patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, true); err != nil {
+			return err
+		}
 		// return early, snapshot found
 		return nil
 	}
 
 	// if no snapshot was found, create it
-	snap, err = createSnapshot(args.VMCtx, vm, obj.Name, obj.Spec.Description, obj.Spec.Memory, obj.Spec.QuiesceSpec)
+	snap, err := createSnapshot(args.VMCtx, vm, obj.Name, obj.Spec.Description, obj.Spec.Memory, obj.Spec.QuiesceSpec)
 	if err != nil {
 		args.VMCtx.Logger.Error(err, "failed to create snapshot for VM")
-		patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, false)
+		if err = patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, false); err != nil {
+			return err
+		}
+
 		return err
 	}
 
 	// update vm.status with currentSnapshot
 	updateVMStatusCurrentSnapshot(args.VMCtx, obj)
-	if err := patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, true); err != nil {
-		return nil
+	if err = patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, true); err != nil {
+		return err
 	}
 
 	return nil

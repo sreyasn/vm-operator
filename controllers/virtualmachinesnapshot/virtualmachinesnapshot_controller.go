@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
 	"reflect"
 	"strings"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -21,10 +21,6 @@ import (
 	"github.com/vmware-tanzu/vm-operator/pkg/record"
 )
 
-const (
-	finalizerName = "vmoperator.vmware.com/virtualmachinesnapshot"
-)
-
 // AddToManager adds this package's controller to the provided manager.
 func AddToManager(ctx *pkgctx.ControllerManagerContext, mgr manager.Manager) error {
 	var (
@@ -34,6 +30,8 @@ func AddToManager(ctx *pkgctx.ControllerManagerContext, mgr manager.Manager) err
 		controllerNameShort = fmt.Sprintf("%s-controller", strings.ToLower(controlledTypeName))
 		controllerNameLong  = fmt.Sprintf("%s/%s/%s", ctx.Namespace, ctx.Name, controllerNameShort)
 	)
+
+	ctx.Logger.Info("Adding controller to manager -- Sreyas")
 
 	r := NewReconciler(
 		ctx,
