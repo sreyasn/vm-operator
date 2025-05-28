@@ -11,7 +11,6 @@ import (
 	"maps"
 	"math/rand"
 	"path"
-	"reflect"
 	"strings"
 	"sync"
 	"text/template"
@@ -812,7 +811,7 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 	// create snapshots of VM if necessary
 	{
 		// current snapshot is not up-to-date.
-		if !reflect.DeepEqual(vmCtx.VM.Spec.CurrentSnapshot, vmCtx.VM.Status.CurrentSnapshot) {
+		if vmCtx.VM.Spec.CurrentSnapshot != nil && (vmCtx.VM.Status.CurrentSnapshot == nil || vmCtx.VM.Spec.CurrentSnapshot.Name != vmCtx.VM.Status.CurrentSnapshot.Name) {
 			// get VirtualMachineSnapshot object
 			vmSnapshot, err := getVirtualMachineSnapShotObject(vmCtx, vs.k8sClient)
 			if err != nil {
