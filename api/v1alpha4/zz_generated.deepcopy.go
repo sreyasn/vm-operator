@@ -13,8 +13,8 @@ import (
 	"github.com/vmware-tanzu/vm-operator/api/v1alpha4/cloudinit"
 	"github.com/vmware-tanzu/vm-operator/api/v1alpha4/common"
 	"github.com/vmware-tanzu/vm-operator/api/v1alpha4/sysprep"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	timex "time"
 )
@@ -981,7 +981,7 @@ func (in *VirtualMachineImageCacheLocationStatus) DeepCopyInto(out *VirtualMachi
 	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -1050,7 +1050,7 @@ func (in *VirtualMachineImageCacheStatus) DeepCopyInto(out *VirtualMachineImageC
 	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -1225,7 +1225,7 @@ func (in *VirtualMachineImageStatus) DeepCopyInto(out *VirtualMachineImageStatus
 	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -1877,7 +1877,7 @@ func (in *VirtualMachinePublishRequestStatus) DeepCopyInto(out *VirtualMachinePu
 	in.LastAttemptTime.DeepCopyInto(&out.LastAttemptTime)
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -2040,7 +2040,7 @@ func (in *VirtualMachineReplicaSetSpec) DeepCopyInto(out *VirtualMachineReplicaS
 	}
 	if in.Selector != nil {
 		in, out := &in.Selector, &out.Selector
-		*out = new(metav1.LabelSelector)
+		*out = new(v1.LabelSelector)
 		(*in).DeepCopyInto(*out)
 	}
 	in.Template.DeepCopyInto(&out.Template)
@@ -2061,7 +2061,7 @@ func (in *VirtualMachineReplicaSetStatus) DeepCopyInto(out *VirtualMachineReplic
 	*out = *in
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -2427,14 +2427,14 @@ func (in *VirtualMachineSnapshotStatus) DeepCopyInto(out *VirtualMachineSnapshot
 	}
 	if in.Children != nil {
 		in, out := &in.Children, &out.Children
-		*out = make([]v1.TypedLocalObjectReference, len(*in))
+		*out = make([]corev1.TypedLocalObjectReference, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -2510,7 +2510,7 @@ func (in *VirtualMachineSpec) DeepCopyInto(out *VirtualMachineSpec) {
 	}
 	if in.CurrentSnapshot != nil {
 		in, out := &in.CurrentSnapshot, &out.CurrentSnapshot
-		*out = new(v1.LocalObjectReference)
+		*out = new(corev1.LocalObjectReference)
 		**out = **in
 	}
 }
@@ -2535,7 +2535,7 @@ func (in *VirtualMachineStatus) DeepCopyInto(out *VirtualMachineStatus) {
 	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
-		*out = make([]metav1.Condition, len(*in))
+		*out = make([]v1.Condition, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
@@ -2573,12 +2573,12 @@ func (in *VirtualMachineStatus) DeepCopyInto(out *VirtualMachineStatus) {
 	}
 	if in.CurrentSnapshot != nil {
 		in, out := &in.CurrentSnapshot, &out.CurrentSnapshot
-		*out = new(v1.TypedObjectReference)
+		*out = new(corev1.TypedObjectReference)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.RootSnapshots != nil {
 		in, out := &in.RootSnapshots, &out.RootSnapshots
-		*out = make([]v1.TypedLocalObjectReference, len(*in))
+		*out = make([]corev1.TypedLocalObjectReference, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
