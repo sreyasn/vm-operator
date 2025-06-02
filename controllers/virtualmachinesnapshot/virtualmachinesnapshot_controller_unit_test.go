@@ -7,10 +7,11 @@ package virtualmachinesnapshot_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -147,16 +148,17 @@ func unitTestsReconcile() {
 				snapObjKey := types.NamespacedName{Name: vmSnapshot.Name, Namespace: vmSnapshot.Namespace}
 				Expect(ctx.Client.Get(ctx, snapObjKey, snapShotObj)).To(Succeed())
 
-				Expect(snapShotObj.Status.Phase).ToNot(BeNil())
-				Expect(*snapShotObj.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
+				Expect(snapShotObj.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
 			})
 		})
 
 		When("vm ready with matching current snapshot name", func() {
 			BeforeEach(func() {
 				vm.Status.UniqueID = dummyVmUuid
-				vm.Spec.CurrentSnapshot = &corev1.LocalObjectReference{
-					Name: vmSnapshot.Name,
+				vm.Spec.CurrentSnapshot = &corev1.TypedLocalObjectReference{
+					APIGroup: pointer.String(vmopv1.GroupName),
+					Kind:     vmSnapshot.Kind,
+					Name:     vmSnapshot.Name,
 				}
 				initObjects = append(initObjects, vm)
 			})

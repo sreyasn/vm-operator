@@ -116,8 +116,7 @@ func intgTestsReconcile() {
 			Eventually(func(g Gomega) {
 				snapObj := getVirtualMachineSnapshot(ctx, objKey)
 				g.Expect(snapObj).ToNot(BeNil())
-				g.Expect(snapObj.Status.Phase).ToNot(BeNil())
-				g.Expect(*snapObj.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
+				g.Expect(snapObj.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
 			}).Should(Succeed(), "waiting snapshot status to be set in progress")
 		})
 	})

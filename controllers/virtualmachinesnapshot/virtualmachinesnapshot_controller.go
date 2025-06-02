@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -116,7 +117,7 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 	vmSnapShot := ctx.VirtualMachineSnapshot
 
 	// return early if phase was already set; nothing to do
-	if phase := ctx.VirtualMachineSnapshot.Status.Phase; phase != nil {
+	if phase := ctx.VirtualMachineSnapshot.Status.Phase; phase != "" {
 		return nil
 	}
 
@@ -136,8 +137,10 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 		return err
 	}
 
-	objRef := &corev1.LocalObjectReference{
-		Name: ctx.VirtualMachineSnapshot.Name,
+	objRef := &corev1.TypedLocalObjectReference{
+		APIGroup: pointer.String(vmopv1.GroupName),
+		Kind:     vmSnapShot.Kind,
+		Name:     ctx.VirtualMachineSnapshot.Name,
 	}
 
 	// vm object already set with snapshot reference
@@ -161,8 +164,7 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 			ctx.VirtualMachineSnapshot.Name, err)
 	}
 
-	inProgress := vmopv1.VMSnapshotInProgress
-	ctx.VirtualMachineSnapshot.Status.Phase = &inProgress
+	ctx.VirtualMachineSnapshot.Status.Phase = vmopv1.VMSnapshotInProgress
 
 	return nil
 }

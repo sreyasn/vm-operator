@@ -6,6 +6,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	vmopv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha4"
@@ -95,7 +96,7 @@ func createSnapshot(vmCtx pkgctx.VirtualMachineContext, vcVM *object.VirtualMach
 
 func updateVMStatusCurrentSnapshot(vmCtx pkgctx.VirtualMachineContext, obj vmopv1.VirtualMachineSnapshot) {
 	vmCtx.VM.Status.CurrentSnapshot = &corev1.TypedLocalObjectReference{
-		APIGroup: &[]string{vmopv1.GroupName}[0],
+		APIGroup: pointer.String(vmopv1.GroupName),
 		Kind:     obj.Kind,
 		Name:     obj.Name,
 	}
