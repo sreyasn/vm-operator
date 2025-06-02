@@ -815,14 +815,22 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 				return err
 			}
 
-			snapShotArgs := virtualmachine.SnapshotArgs{
+			snapArgs := virtualmachine.SnapshotArgs{
 				VMCtx:      vmCtx,
 				VcVM:       vcVM,
 				VMSnapshot: vmSnapshot,
 				K8sClient:  vs.k8sClient,
 			}
 
-			err = virtualmachine.SnapshotVirtualMachine(snapShotArgs)
+			snapSuccess := true
+			err = virtualmachine.SnapshotVirtualMachine(snapArgs)
+			if err != nil {
+				vmCtx.Logger.Error(err, "failed to snapshot virtual machine")
+				snapSuccess = false
+			}
+
+			err = PatchSnapshotStatus(snapArgs.VMCtx, snapArgs.K8sClient,
+				snapArgs.VMSnapshot.Name, snapArgs.VMSnapshot.Namespace, snapSuccess)
 			if err != nil {
 				return err
 			}

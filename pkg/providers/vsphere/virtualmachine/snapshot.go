@@ -24,17 +24,11 @@ type SnapshotArgs struct {
 func SnapshotVirtualMachine(args SnapshotArgs) error {
 	obj := args.VMSnapshot
 	vm := args.VcVM
-
 	// find snapshot by name
 	snap, _ := vm.FindSnapshot(args.VMCtx, obj.Name)
 	if snap != nil {
-
 		// update vm.status with currentSnapshot
 		updateVMStatusCurrentSnapshot(args.VMCtx, obj)
-		// patch the snapShot status
-		if err := patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, true); err != nil {
-			return err
-		}
 		// return early, snapshot found
 		return nil
 	}
@@ -43,19 +37,11 @@ func SnapshotVirtualMachine(args SnapshotArgs) error {
 	snap, err := createSnapshot(args.VMCtx, vm, obj.Name, obj.Spec.Description, obj.Spec.Memory, obj.Spec.QuiesceSpec)
 	if err != nil {
 		args.VMCtx.Logger.Error(err, "failed to create snapshot for VM")
-		if err = patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, false); err != nil {
-			return err
-		}
-
 		return err
 	}
 
 	// update vm.status with currentSnapshot
 	updateVMStatusCurrentSnapshot(args.VMCtx, obj)
-	if err = patchSnapshotStatus(args.VMCtx, args.K8sClient, obj, true); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -100,31 +86,4 @@ func updateVMStatusCurrentSnapshot(vmCtx pkgctx.VirtualMachineContext, obj vmopv
 		Kind:     obj.Kind,
 		Name:     obj.Name,
 	}
-}
-
-func patchSnapshotStatus(vmCtx pkgctx.VirtualMachineContext, k8sClient client.Client,
-	obj vmopv1.VirtualMachineSnapshot, success bool) error {
-
-	snapShot := &vmopv1.VirtualMachineSnapshot{}
-	objKey := client.ObjectKey{Name: obj.Name, Namespace: obj.Namespace}
-	// get snapshot again to ensure it's up-to-date.
-	err := k8sClient.Get(vmCtx, objKey, snapShot)
-	if err != nil {
-		vmCtx.Logger.Error(err, "failed to get snapshot resource", "snapshot", objKey)
-		return err
-	}
-
-	snapPatch := client.MergeFrom(snapShot.DeepCopy())
-	if !success {
-		snapShot.Status.Phase = vmopv1.VMSnapshotFailed
-	} else {
-		snapShot.Status.Phase = vmopv1.VMSnapshotSucceeded
-	}
-
-	if err := k8sClient.Status().Patch(vmCtx, snapShot, snapPatch); err != nil {
-		return fmt.Errorf(
-			"failed to patch snapshot status resource %s: err: %s", objKey, err.Error())
-	}
-
-	return nil
 }

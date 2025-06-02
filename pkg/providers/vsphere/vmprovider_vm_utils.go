@@ -735,3 +735,29 @@ func getSecretOrConfigMapObject(
 
 	return secret, err
 }
+
+func PatchSnapshotStatus(vmCtx pkgctx.VirtualMachineContext, k8sClient ctrlclient.Client,
+	objName string, objNs string, success bool) error {
+	snapShot := &vmopv1.VirtualMachineSnapshot{}
+	objKey := ctrlclient.ObjectKey{Name: objName, Namespace: objNs}
+	// get snapshot again to ensure it's up-to-date.
+	err := k8sClient.Get(vmCtx, objKey, snapShot)
+	if err != nil {
+		vmCtx.Logger.Error(err, "failed to get snapshot resource", "snapshot", objKey)
+		return err
+	}
+
+	snapPatch := ctrlclient.MergeFrom(snapShot.DeepCopy())
+	if !success {
+		snapShot.Status.Phase = vmopv1.VMSnapshotFailed
+	} else {
+		snapShot.Status.Phase = vmopv1.VMSnapshotSucceeded
+	}
+
+	if err := k8sClient.Status().Patch(vmCtx, snapShot, snapPatch); err != nil {
+		return fmt.Errorf(
+			"failed to patch snapshot status resource %s: err: %s", objKey, err.Error())
+	}
+
+	return nil
+}
