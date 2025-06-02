@@ -16,7 +16,7 @@ on:
   push:
     branches:
     - main
-    - topic/sn/ft-snapshot
+    - topic/sn/ft-snapshot-v1
 
 #jobs:
 #
