@@ -47,7 +47,7 @@ func unitTestsReconcile() {
 		vm = &vmopv1.VirtualMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "dummy-vm",
-				Namespace: ctx.Namespace,
+				Namespace: "test-namespace",
 			},
 			Spec: vmopv1.VirtualMachineSpec{
 				ImageName:  "dummy-image",
@@ -58,7 +58,7 @@ func unitTestsReconcile() {
 		vmSnapshot = &vmopv1.VirtualMachineSnapshot{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "snap-1",
-				Namespace: ctx.Namespace,
+				Namespace: "test-namespace",
 			},
 			Spec: vmopv1.VirtualMachineSnapshotSpec{
 				VMRef: corev1.TypedLocalObjectReference{
@@ -112,7 +112,7 @@ func unitTestsReconcile() {
 		When("vm does not exist", func() {
 			It("returns failure", func() {
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(ContainSubstring("failed to get VirtualMachine"))
+				Expect(err.Error()).To(ContainSubstring("not found"))
 			})
 		})
 
@@ -123,29 +123,13 @@ func unitTestsReconcile() {
 
 			It("returns failure", func() {
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(ContainSubstring("VM hasn't been created and has no uniqueID"))
-			})
-		})
-
-		When("vm ready with matching current snapshot name", func() {
-			BeforeEach(func() {
-				vm.Status.UniqueID = dummyVmUuid
-				vm.Spec.CurrentSnapshot = &corev1.LocalObjectReference{
-					Name: vmSnapshot.Name,
-				}
-				Expect(ctx.Client.Status().Update(ctx, vm)).To(Succeed())
-				initObjects = append(initObjects, vm)
-			})
-
-			It("returns success", func() {
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("VM hasn't been created and has no uniqueID"))
 			})
 		})
 
 		When("vm ready with different/empty current snapshot ", func() {
 			BeforeEach(func() {
 				vm.Status.UniqueID = dummyVmUuid
-				Expect(ctx.Client.Status().Update(ctx, vm)).To(Succeed())
 				initObjects = append(initObjects, vm)
 			})
 
@@ -159,7 +143,26 @@ func unitTestsReconcile() {
 					Name: vmSnapshot.Name,
 				}))
 
-				Expect(vmSnapshot.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
+				snapShotObj := &vmopv1.VirtualMachineSnapshot{}
+				snapObjKey := types.NamespacedName{Name: vmSnapshot.Name, Namespace: vmSnapshot.Namespace}
+				Expect(ctx.Client.Get(ctx, snapObjKey, snapShotObj)).To(Succeed())
+
+				Expect(snapShotObj.Status.Phase).ToNot(BeNil())
+				Expect(*snapShotObj.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
+			})
+		})
+
+		When("vm ready with matching current snapshot name", func() {
+			BeforeEach(func() {
+				vm.Status.UniqueID = dummyVmUuid
+				vm.Spec.CurrentSnapshot = &corev1.LocalObjectReference{
+					Name: vmSnapshot.Name,
+				}
+				initObjects = append(initObjects, vm)
+			})
+
+			It("returns success", func() {
+				Expect(err).ToNot(HaveOccurred())
 			})
 		})
 	})

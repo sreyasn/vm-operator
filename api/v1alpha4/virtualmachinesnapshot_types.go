@@ -138,3 +138,7 @@ type VirtualMachineSnapshotList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []VirtualMachineSnapshot `json:"items"`
 }
+
+func init() {
+	objectTypes = append(objectTypes, &VirtualMachineSnapshot{}, &VirtualMachineSnapshotList{})
+}

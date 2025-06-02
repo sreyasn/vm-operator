@@ -69,8 +69,8 @@ func intgTestsReconcile() {
 
 		vmSnapShot = &vmopv1.VirtualMachineSnapshot{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "small",
-				Namespace: "default",
+				Name:      "snap-1",
+				Namespace: ctx.Namespace,
 			},
 			Spec: vmopv1.VirtualMachineSnapshotSpec{
 				VMRef: corev1.TypedLocalObjectReference{
@@ -107,7 +107,6 @@ func intgTestsReconcile() {
 			Eventually(func(g Gomega) {
 				vmObj := getVirtualMachine(ctx, vmObjKey)
 				g.Expect(vmObj).ToNot(BeNil())
-				g.Expect(vmObj.Spec.CurrentSnapshot).ToNot(BeEmpty())
 				g.Expect(vmObj.Spec.CurrentSnapshot).To(Equal(&corev1.LocalObjectReference{
 					Name: vmSnapShot.Name,
 				}))
@@ -117,8 +116,8 @@ func intgTestsReconcile() {
 			Eventually(func(g Gomega) {
 				snapObj := getVirtualMachineSnapshot(ctx, objKey)
 				g.Expect(snapObj).ToNot(BeNil())
-				g.Expect(snapObj.Status.Phase).ToNot(BeEmpty())
-				g.Expect(snapObj.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
+				g.Expect(snapObj.Status.Phase).ToNot(BeNil())
+				g.Expect(*snapObj.Status.Phase).To(Equal(vmopv1.VMSnapshotInProgress))
 			}).Should(Succeed(), "waiting snapshot status to be set in progress")
 		})
 	})

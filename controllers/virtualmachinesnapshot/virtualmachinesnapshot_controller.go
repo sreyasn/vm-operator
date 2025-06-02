@@ -31,8 +31,6 @@ func AddToManager(ctx *pkgctx.ControllerManagerContext, mgr manager.Manager) err
 		controllerNameLong  = fmt.Sprintf("%s/%s/%s", ctx.Namespace, ctx.Name, controllerNameShort)
 	)
 
-	ctx.Logger.Info("Adding controller to manager -- Sreyas")
-
 	r := NewReconciler(
 		ctx,
 		mgr.GetClient(),
@@ -91,6 +89,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 		return ctrl.Result{}, fmt.Errorf("failed to init patch helper for %s: %w", vmSnapShotCtx, err)
 	}
 	defer func() {
+		vmSnapShotCtx.Logger.Info("Patching VirtualMachineSnapShot", "snap", vmSnapShot)
 		if err := patchHelper.Patch(ctx, vmSnapShot); err != nil {
 			if reterr == nil {
 				reterr = err
