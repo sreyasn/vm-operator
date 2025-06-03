@@ -823,7 +823,7 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 				K8sClient:  vs.k8sClient,
 			}
 
-			vmCtx.Logger.V(4).Info("Taking a snapshot of VM Service managed VM")
+			vmCtx.Logger.Info("Taking a snapshot of VM Service managed VM")
 			snapSuccess := true
 			err = virtualmachine.SnapshotVirtualMachine(snapArgs)
 			if err != nil {

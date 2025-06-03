@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/pointer"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -20,6 +20,7 @@ import (
 	pkgctx "github.com/vmware-tanzu/vm-operator/pkg/context"
 	"github.com/vmware-tanzu/vm-operator/pkg/patch"
 	"github.com/vmware-tanzu/vm-operator/pkg/record"
+	"github.com/vmware-tanzu/vm-operator/pkg/util/ptr"
 )
 
 // AddToManager adds this package's controller to the provided manager.
@@ -138,7 +139,7 @@ func (r *Reconciler) ReconcileNormal(ctx *pkgctx.VirtualMachineSnapshotContext) 
 	}
 
 	objRef := &corev1.TypedLocalObjectReference{
-		APIGroup: pointer.String(vmopv1.GroupName),
+		APIGroup: ptr.To(vmopv1.GroupName),
 		Kind:     vmSnapShot.Kind,
 		Name:     ctx.VirtualMachineSnapshot.Name,
 	}

@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"k8s.io/utils/pointer"
 	"math/rand"
 	"sync"
 
@@ -3133,7 +3132,7 @@ func vmTests() {
 			Context("vm snapshot object doesn't exist", func() {
 				BeforeEach(func() {
 					vm.Spec.CurrentSnapshot = &corev1.TypedLocalObjectReference{
-						APIGroup: pointer.String(vmopv1.GroupName),
+						APIGroup: ptr.To(vmopv1.GroupName),
 						Kind:     vmSnapshot.Kind,
 						Name:     vmSnapshot.Name,
 					}
@@ -3149,17 +3148,17 @@ func vmTests() {
 			Context("create new vm snapshot and patch status", func() {
 				BeforeEach(func() {
 					vm.Spec.CurrentSnapshot = &corev1.TypedLocalObjectReference{
-						APIGroup: pointer.String(vmopv1.GroupName),
+						APIGroup: ptr.To(vmopv1.GroupName),
 						Kind:     vmSnapshot.Kind,
 						Name:     vmSnapshot.Name,
 					}
+
+					vm.Status.UniqueID = "unique-ID"
 				})
 
 				It("success", func() {
 					// create the snapshot obj
 					Expect(ctx.Client.Create(ctx, vmSnapshot)).To(Succeed())
-					obj := &vmopv1.VirtualMachineSnapshot{}
-					ctx.Client.Get(ctx, client.ObjectKey{Name: vmSnapshot.Name, Namespace: vmSnapshot.Namespace}, obj)
 
 					vcVM, err := createOrUpdateAndGetVcVM(ctx, vmProvider, vm)
 					Expect(err).To(BeNil())
@@ -3167,6 +3166,22 @@ func vmTests() {
 					snap, err := vcVM.FindSnapshot(ctx, vmSnapshot.Name)
 					Expect(err).To(BeNil())
 					Expect(snap).ToNot(BeNil())
+
+					Expect(vm.Status.CurrentSnapshot).To(Equal(&corev1.TypedLocalObjectReference{
+						APIGroup: ptr.To(vmopv1.GroupName),
+						Kind:     vmSnapshot.Kind,
+						Name:     vmSnapshot.Name,
+					}))
+
+					snapObj := &vmopv1.VirtualMachineSnapshot{}
+					err = ctx.Client.Get(ctx, client.ObjectKey{Name: vmSnapshot.Name, Namespace: vmSnapshot.Namespace}, snapObj)
+					Expect(err).To(BeNil())
+					Expect(snapObj.Status).To(Equal(vmopv1.VirtualMachineSnapshotStatus{
+						UniqueID:   "unique-ID",
+						PowerState: vmopv1.VirtualMachinePowerStateOn,
+						Quiesced:   false,
+						Phase:      vmopv1.VMSnapshotSucceeded,
+					}))
 				})
 			})
 		})

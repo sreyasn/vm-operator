@@ -748,6 +748,15 @@ func PatchSnapshotStatus(vmCtx pkgctx.VirtualMachineContext, k8sClient ctrlclien
 	}
 
 	snapPatch := ctrlclient.MergeFrom(snapShot.DeepCopy())
+	vmStatus := vmCtx.VM.Status
+
+	snapShot.Status.UniqueID = vmCtx.VM.Status.UniqueID
+	snapShot.Status = vmopv1.VirtualMachineSnapshotStatus{
+		UniqueID:   vmStatus.UniqueID,
+		PowerState: vmStatus.PowerState,
+		Quiesced:   snapShot.Spec.QuiesceSpec != nil,
+	}
+
 	if !success {
 		snapShot.Status.Phase = vmopv1.VMSnapshotFailed
 	} else {

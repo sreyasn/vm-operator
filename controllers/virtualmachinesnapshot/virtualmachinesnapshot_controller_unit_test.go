@@ -7,8 +7,6 @@ package virtualmachinesnapshot_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/utils/pointer"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -64,7 +62,7 @@ func unitTestsReconcile() {
 			},
 			Spec: vmopv1.VirtualMachineSnapshotSpec{
 				VMRef: corev1.TypedLocalObjectReference{
-					APIGroup: pointer.String(vmopv1.GroupName),
+					APIGroup: ptr.To(vmopv1.GroupName),
 					Kind:     vm.Kind,
 					Name:     vm.Name,
 				},
@@ -95,7 +93,7 @@ func unitTestsReconcile() {
 		)
 
 		const (
-			dummyVmUuid = "unique-vm-id"
+			dummyVMUUID = "unique-vm-id"
 		)
 
 		BeforeEach(func() {
@@ -131,7 +129,7 @@ func unitTestsReconcile() {
 
 		When("vm ready with different/empty current snapshot ", func() {
 			BeforeEach(func() {
-				vm.Status.UniqueID = dummyVmUuid
+				vm.Status.UniqueID = dummyVMUUID
 				initObjects = append(initObjects, vm)
 			})
 
@@ -155,7 +153,7 @@ func unitTestsReconcile() {
 
 		When("vm ready with matching current snapshot name", func() {
 			BeforeEach(func() {
-				vm.Status.UniqueID = dummyVmUuid
+				vm.Status.UniqueID = dummyVMUUID
 				vm.Spec.CurrentSnapshot = &corev1.TypedLocalObjectReference{
 					APIGroup: ptr.To(vmopv1.GroupName),
 					Kind:     vmSnapshot.Kind,

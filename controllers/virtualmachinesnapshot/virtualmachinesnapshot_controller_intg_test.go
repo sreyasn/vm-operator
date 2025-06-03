@@ -15,6 +15,7 @@ import (
 
 	vmopv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha4"
 	"github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels"
+	"github.com/vmware-tanzu/vm-operator/pkg/util/ptr"
 	"github.com/vmware-tanzu/vm-operator/test/builder"
 )
 
@@ -74,7 +75,7 @@ func intgTestsReconcile() {
 			},
 			Spec: vmopv1.VirtualMachineSnapshotSpec{
 				VMRef: corev1.TypedLocalObjectReference{
-					APIGroup: &[]string{vmopv1.GroupName}[0],
+					APIGroup: ptr.To(vmopv1.GroupName),
 					Kind:     vm.Kind,
 					Name:     vm.Name,
 				},
@@ -107,8 +108,10 @@ func intgTestsReconcile() {
 			Eventually(func(g Gomega) {
 				vmObj := getVirtualMachine(ctx, vmObjKey)
 				g.Expect(vmObj).ToNot(BeNil())
-				g.Expect(vmObj.Spec.CurrentSnapshot).To(Equal(&corev1.LocalObjectReference{
-					Name: vmSnapShot.Name,
+				g.Expect(vmObj.Spec.CurrentSnapshot).To(Equal(&corev1.TypedLocalObjectReference{
+					APIGroup: ptr.To(vmopv1.GroupName),
+					Kind:     vmSnapShot.Kind,
+					Name:     vmSnapShot.Name,
 				}))
 			}).Should(Succeed(), "waiting current snapshot to be set on virtualmachine")
 
