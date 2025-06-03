@@ -7,11 +7,12 @@ package virtualmachinesnapshot_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/utils/pointer"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -63,7 +64,7 @@ func unitTestsReconcile() {
 			},
 			Spec: vmopv1.VirtualMachineSnapshotSpec{
 				VMRef: corev1.TypedLocalObjectReference{
-					APIGroup: &[]string{vmopv1.GroupName}[0],
+					APIGroup: pointer.String(vmopv1.GroupName),
 					Kind:     vm.Kind,
 					Name:     vm.Name,
 				},
@@ -156,7 +157,7 @@ func unitTestsReconcile() {
 			BeforeEach(func() {
 				vm.Status.UniqueID = dummyVmUuid
 				vm.Spec.CurrentSnapshot = &corev1.TypedLocalObjectReference{
-					APIGroup: pointer.String(vmopv1.GroupName),
+					APIGroup: ptr.To(vmopv1.GroupName),
 					Kind:     vmSnapshot.Kind,
 					Name:     vmSnapshot.Name,
 				}

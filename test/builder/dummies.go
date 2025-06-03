@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-
 	"github.com/google/uuid"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -542,6 +541,25 @@ func DummyVirtualMachineWebConsoleRequest(namespace, wcrName, vmName, pubKey str
 		Spec: vmopv1.VirtualMachineWebConsoleRequestSpec{
 			Name:      vmName,
 			PublicKey: pubKey,
+		},
+	}
+}
+
+func DummyVirtualMachineSnapshot(namespace, name, vmName string) *vmopv1.VirtualMachineSnapshot {
+	return &vmopv1.VirtualMachineSnapshot{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "virtualmachinesnapshots",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: vmopv1.VirtualMachineSnapshotSpec{
+			VMRef: corev1.TypedLocalObjectReference{
+				APIGroup: ptr.To(vmopv1.GroupName),
+				Kind:     "VirtualMachine",
+				Name:     vmName,
+			},
 		},
 	}
 }

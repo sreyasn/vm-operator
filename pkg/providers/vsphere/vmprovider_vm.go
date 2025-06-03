@@ -812,6 +812,7 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 			// get VirtualMachineSnapshot object
 			vmSnapshot, err := getVirtualMachineSnapShotObject(vmCtx, vs.k8sClient)
 			if err != nil {
+				vmCtx.Logger.Error(err, "snapshot object not found")
 				return err
 			}
 
@@ -822,6 +823,7 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 				K8sClient:  vs.k8sClient,
 			}
 
+			vmCtx.Logger.V(4).Info("Taking a snapshot of VM Service managed VM")
 			snapSuccess := true
 			err = virtualmachine.SnapshotVirtualMachine(snapArgs)
 			if err != nil {

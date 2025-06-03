@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"k8s.io/utils/pointer"
 	"math/rand"
 	"sync"
 
@@ -3112,6 +3113,60 @@ func vmTests() {
 					var path object.DatastorePath
 					path.FromString(props[vmPathName].(string))
 					Expect(path.Datastore).NotTo(BeEmpty())
+				})
+			})
+		})
+
+		Context("VM Snapshots", func() {
+			var (
+				vmSnapshot *vmopv1.VirtualMachineSnapshot
+			)
+
+			BeforeEach(func() {
+				vmSnapshot = builder.DummyVirtualMachineSnapshot("", "test-snap", vm.Name)
+			})
+
+			JustBeforeEach(func() {
+				vmSnapshot.Namespace = nsInfo.Namespace
+			})
+
+			Context("vm snapshot object doesn't exist", func() {
+				BeforeEach(func() {
+					vm.Spec.CurrentSnapshot = &corev1.TypedLocalObjectReference{
+						APIGroup: pointer.String(vmopv1.GroupName),
+						Kind:     vmSnapshot.Kind,
+						Name:     vmSnapshot.Name,
+					}
+				})
+
+				It("return obj not found err", func() {
+					err := createOrUpdateVM(ctx, vmProvider, vm)
+					Expect(err).ToNot(BeNil())
+					Expect(err.Error()).To(ContainSubstring("virtualmachinesnapshots.vmoperator.vmware.com \"test-snap\" not found"))
+				})
+			})
+
+			Context("create new vm snapshot and patch status", func() {
+				BeforeEach(func() {
+					vm.Spec.CurrentSnapshot = &corev1.TypedLocalObjectReference{
+						APIGroup: pointer.String(vmopv1.GroupName),
+						Kind:     vmSnapshot.Kind,
+						Name:     vmSnapshot.Name,
+					}
+				})
+
+				It("success", func() {
+					// create the snapshot obj
+					Expect(ctx.Client.Create(ctx, vmSnapshot)).To(Succeed())
+					obj := &vmopv1.VirtualMachineSnapshot{}
+					ctx.Client.Get(ctx, client.ObjectKey{Name: vmSnapshot.Name, Namespace: vmSnapshot.Namespace}, obj)
+
+					vcVM, err := createOrUpdateAndGetVcVM(ctx, vmProvider, vm)
+					Expect(err).To(BeNil())
+					Expect(vcVM).ToNot(BeNil())
+					snap, err := vcVM.FindSnapshot(ctx, vmSnapshot.Name)
+					Expect(err).To(BeNil())
+					Expect(snap).ToNot(BeNil())
 				})
 			})
 		})
