@@ -1,3 +1,7 @@
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
+
 package virtualmachine
 
 import (
@@ -7,7 +11,6 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	vmopv1 "github.com/vmware-tanzu/vm-operator/api/v1alpha4"
 	pkgctx "github.com/vmware-tanzu/vm-operator/pkg/context"
@@ -19,7 +22,6 @@ type SnapshotArgs struct {
 	VMCtx      pkgctx.VirtualMachineContext
 	VcVM       *object.VirtualMachine
 	VMSnapshot vmopv1.VirtualMachineSnapshot
-	K8sClient  client.Client
 }
 
 func SnapshotVirtualMachine(args SnapshotArgs) error {
@@ -35,7 +37,8 @@ func SnapshotVirtualMachine(args SnapshotArgs) error {
 	}
 
 	// if no snapshot was found, create it
-	err := createSnapshot(args.VMCtx, vm, obj.Name, obj.Spec.Description, obj.Spec.Memory, obj.Spec.QuiesceSpec)
+	args.VMCtx.Logger.Info("Creating Snapshot of VirtualMachine", "snapshot name", obj.Name)
+	err := CreateSnapshot(args.VMCtx, vm, obj.Name, obj.Spec.Description, obj.Spec.Memory, obj.Spec.QuiesceSpec)
 	if err != nil {
 		args.VMCtx.Logger.Error(err, "failed to create snapshot for VM", "snapshot", obj.Name)
 		return err
@@ -46,7 +49,7 @@ func SnapshotVirtualMachine(args SnapshotArgs) error {
 	return nil
 }
 
-func createSnapshot(vmCtx pkgctx.VirtualMachineContext, vcVM *object.VirtualMachine, name string, description string,
+func CreateSnapshot(vmCtx pkgctx.VirtualMachineContext, vcVM *object.VirtualMachine, name string, description string,
 	memory *bool, quiesce *vmopv1.QuiesceSpec) error {
 	var quiesceSpec *types.VirtualMachineGuestQuiesceSpec
 	if quiesce != nil {

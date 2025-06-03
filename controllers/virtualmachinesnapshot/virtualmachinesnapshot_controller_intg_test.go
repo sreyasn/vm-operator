@@ -69,6 +69,9 @@ func intgTestsReconcile() {
 		}
 
 		vmSnapShot = &vmopv1.VirtualMachineSnapshot{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "VirtualMachineSnapshot",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "snap-1",
 				Namespace: ctx.Namespace,
@@ -110,7 +113,7 @@ func intgTestsReconcile() {
 				g.Expect(vmObj).ToNot(BeNil())
 				g.Expect(vmObj.Spec.CurrentSnapshot).To(Equal(&corev1.TypedLocalObjectReference{
 					APIGroup: ptr.To(vmopv1.GroupName),
-					Kind:     vmSnapShot.Kind,
+					Kind:     "VirtualMachineSnapshot",
 					Name:     vmSnapShot.Name,
 				}))
 			}).Should(Succeed(), "waiting current snapshot to be set on virtualmachine")

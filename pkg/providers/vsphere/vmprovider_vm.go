@@ -820,7 +820,6 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 				VMCtx:      vmCtx,
 				VcVM:       vcVM,
 				VMSnapshot: vmSnapshot,
-				K8sClient:  vs.k8sClient,
 			}
 
 			vmCtx.Logger.Info("Taking a snapshot of VM Service managed VM")
@@ -831,7 +830,7 @@ func (vs *vSphereVMProvider) updateVirtualMachine(
 				snapSuccess = false
 			}
 
-			err = PatchSnapshotStatus(snapArgs.VMCtx, snapArgs.K8sClient,
+			err = PatchSnapshotStatus(snapArgs.VMCtx, vs.k8sClient,
 				snapArgs.VMSnapshot.Name, snapArgs.VMSnapshot.Namespace, snapSuccess)
 			if err != nil {
 				return err

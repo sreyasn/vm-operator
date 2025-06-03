@@ -3152,8 +3152,6 @@ func vmTests() {
 						Kind:     vmSnapshot.Kind,
 						Name:     vmSnapshot.Name,
 					}
-
-					vm.Status.UniqueID = "unique-ID"
 				})
 
 				It("success", func() {
@@ -3177,7 +3175,7 @@ func vmTests() {
 					err = ctx.Client.Get(ctx, client.ObjectKey{Name: vmSnapshot.Name, Namespace: vmSnapshot.Namespace}, snapObj)
 					Expect(err).To(BeNil())
 					Expect(snapObj.Status).To(Equal(vmopv1.VirtualMachineSnapshotStatus{
-						UniqueID:   "unique-ID",
+						UniqueID:   vm.Status.UniqueID,
 						PowerState: vmopv1.VirtualMachinePowerStateOn,
 						Quiesced:   false,
 						Phase:      vmopv1.VMSnapshotSucceeded,

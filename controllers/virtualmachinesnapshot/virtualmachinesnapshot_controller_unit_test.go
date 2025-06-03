@@ -56,6 +56,9 @@ func unitTestsReconcile() {
 		}
 
 		vmSnapshot = &vmopv1.VirtualMachineSnapshot{
+			TypeMeta: metav1.TypeMeta{
+				Kind: "VirtualMachineSnapshot",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "snap-1",
 				Namespace: "test-namespace",
@@ -139,8 +142,10 @@ func unitTestsReconcile() {
 				vmObj := &vmopv1.VirtualMachine{}
 				Expect(ctx.Client.Get(ctx, objKey, vmObj)).To(Succeed())
 
-				Expect(vmObj.Spec.CurrentSnapshot).To(Equal(&corev1.LocalObjectReference{
-					Name: vmSnapshot.Name,
+				Expect(vmObj.Spec.CurrentSnapshot).To(Equal(&corev1.TypedLocalObjectReference{
+					APIGroup: ptr.To(vmopv1.GroupName),
+					Kind:     vmSnapshot.Kind,
+					Name:     vmSnapshot.Name,
 				}))
 
 				snapShotObj := &vmopv1.VirtualMachineSnapshot{}
