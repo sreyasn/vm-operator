@@ -44,7 +44,7 @@ func intgTestsReconcile() {
 		}
 		return vm
 	}
-	
+
 	BeforeEach(func() {
 		ctx = suite.NewIntegrationTestContext()
 
